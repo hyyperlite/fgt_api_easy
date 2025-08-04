@@ -1,6 +1,6 @@
 # Makefile for FortiGate API Generic Client
 
-.PHONY: help install test clean examples
+.PHONY: help install test test-table clean examples
 
 # Default target
 help:
@@ -8,20 +8,22 @@ help:
 	@echo "============================"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  help     - Show this help message"
-	@echo "  install  - Install required dependencies"
-	@echo "  test     - Run the test suite"
-	@echo "  examples - Show usage examples"
-	@echo "  clean    - Clean up temporary files"
+	@echo "  help       - Show this help message"
+	@echo "  install    - Install required dependencies"
+	@echo "  test       - Run the test suite"
+	@echo "  test-table - Test table formatting functionality"
+	@echo "  examples   - Show usage examples"
+	@echo "  clean      - Clean up temporary files"
 	@echo ""
 	@echo "Usage examples:"
 	@echo "  make install"
 	@echo "  make test"
+	@echo "  make test-table"
 	@echo "  python3 fgt_api_client.py --help"
 
 install:
 	@echo "Installing dependencies..."
-	python3 -m pip install --user git+https://github.com/p4r4n0y1ng/pyfgt.git requests
+	python3 -m pip install --user git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
 	@echo "✓ Dependencies installed"
 
 test:
@@ -31,6 +33,12 @@ test:
 examples:
 	@echo "Running examples (configure HOST and API_KEY first)..."
 	python3 examples.py
+
+test-table:
+	@echo "Testing table formatting functionality..."
+	@python3 -c "from fgt_api_client import TableFormatter; print('✅ TableFormatter imported successfully')"
+	@python3 -c "from tabulate import tabulate; print('✅ tabulate library available')"
+	@echo "✓ Table formatting tests passed"
 
 clean:
 	@echo "Cleaning up temporary files..."

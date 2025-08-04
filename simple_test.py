@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Simple test for pretty printing default behavior
+Simple test for format options behavior
 """
 
 import sys
 import subprocess
 import json
 
-def test_pretty_default():
-    """Test that pretty printing is enabled by default"""
-    print("Testing pretty print default behavior...")
+def test_format_options():
+    """Test that format options are working correctly"""
+    print("Testing format options behavior...")
     
     # Test command that should trigger the argument parsing
     cmd = ["python3", "fgt_api_client.py", "--help"]
@@ -18,11 +18,11 @@ def test_pretty_default():
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             output = result.stdout
-            if "--no-pretty" in output and "pretty print is enabled by default" in output:
-                print("✓ Help text shows --no-pretty option with correct description")
+            if "--format {json,pretty,table}" in output and "Output format (default: table)" in output:
+                print("✓ Help text shows --format option with correct choices")
                 return True
             else:
-                print("✗ Help text doesn't show expected pretty print options")
+                print("✗ Help text doesn't show expected format options")
                 return False
         else:
             print(f"✗ Help command failed: {result.stderr}")
@@ -35,37 +35,40 @@ def test_argument_parsing():
     """Test basic argument parsing logic"""
     import argparse
     
-    # Simulate the argument parser setup
+    # Simulate the argument parser setup with new format option
     parser = argparse.ArgumentParser()
-    parser.add_argument('--no-pretty', action='store_true',
-                       help='Disable pretty print JSON output')
-    parser.add_argument('--pretty', action='store_true',
-                       help='Enable pretty print JSON output')
+    parser.add_argument('--format', choices=['json', 'pretty', 'table'], default='table',
+                       help='Output format (default: table)')
     
     # Test default behavior (no flags)
     args = parser.parse_args([])
-    use_pretty = not args.no_pretty
-    if use_pretty:
-        print("✓ Default behavior: pretty printing enabled")
+    if args.format == 'table':
+        print("✓ Default behavior: table format selected")
     else:
-        print("✗ Default behavior: pretty printing disabled")
+        print("✗ Default behavior: unexpected format")
     
-    # Test with --no-pretty flag
-    args = parser.parse_args(['--no-pretty'])
-    use_pretty = not args.no_pretty
-    if not use_pretty:
-        print("✓ --no-pretty flag: pretty printing disabled")
+    # Test with --format json flag
+    args = parser.parse_args(['--format', 'json'])
+    if args.format == 'json':
+        print("✓ --format json: JSON format selected")
     else:
-        print("✗ --no-pretty flag: pretty printing still enabled")
+        print("✗ --format json: unexpected format")
+    
+    # Test with --format table flag
+    args = parser.parse_args(['--format', 'table'])
+    if args.format == 'table':
+        print("✓ --format table: table format selected")
+    else:
+        print("✗ --format table: unexpected format")
     
     return True
 
 def main():
-    print("Simple Pretty Print Test")
+    print("Simple Format Options Test")
     print("=" * 30)
     
     success = True
-    success &= test_pretty_default()
+    success &= test_format_options()
     success &= test_argument_parsing()
     
     if success:

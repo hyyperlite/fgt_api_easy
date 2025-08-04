@@ -70,8 +70,20 @@ def main():
     
     # Example 4: Get system interfaces with compact output
     run_command(
-        base_cmd + ["-m", "get", "-e", "/cmdb/system/interface", "--no-pretty"],
+        base_cmd + ["-m", "get", "-e", "/cmdb/system/interface", "--format", "json"],
         "Example 4: Get System Interfaces (Compact Output)"
+    )
+    
+    # Example 4.5: Get firewall addresses with specific table fields
+    run_command(
+        base_cmd + ["-m", "get", "-e", "/cmdb/firewall/address", "--table-fields", "name,subnet,type"],
+        "Example 4.5: Get Firewall Addresses (Table Format with Custom Fields)"
+    )
+    
+    # Example 4.6: Get firewall policies (table format is default)
+    run_command(
+        base_cmd + ["-m", "get", "-e", "/cmdb/firewall/policy"],
+        "Example 4.6: Get Firewall Policies (Default Table Format)"
     )
     
     # Example 5: Create a test address object (commented out to prevent accidental creation)

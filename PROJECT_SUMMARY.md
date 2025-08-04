@@ -39,7 +39,9 @@ fgt_api_generic/
 ### Advanced Features
 - **Query Parameters**: Support for filtering, formatting, VDOM selection
 - **JSON Data Input**: Structured data for POST/PUT operations
-- **Pretty JSON Output**: Formatted response display (enabled by default)
+- **Multiple Output Formats**: JSON, pretty JSON, and table formats
+- **Table Output**: Clean tabular display with auto-field detection for common objects
+- **Customizable Tables**: Custom field selection and width control
 - **Clean Output**: SSL warnings suppressed by default for better user experience
 - **Comprehensive Error Handling**: Specific exceptions for different error types
 - **Debug Mode**: Detailed logging for troubleshooting
@@ -71,10 +73,16 @@ fgt_api_generic/
   --debug --verify-ssl --timeout 60
 
 # Disable pretty printing for compact output  
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --no-pretty
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --format json
 
 # Enable SSL warnings for security debugging
 ./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --ssl-warnings
+
+# Table format for better readability
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --format table
+
+# Table format with specific fields
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --format table --table-fields policyid,name,action,status
 ```
 
 ## Installation and Setup
@@ -83,7 +91,7 @@ fgt_api_generic/
    ```bash
    make install
    # OR
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests
+   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
    ```
 
 2. **Run Tests**:

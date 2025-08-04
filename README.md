@@ -9,17 +9,62 @@ A simple Python command-line application for interacting with FortiGate devices 
 - All HTTP methods (GET, POST, PUT, DELETE)
 - Query parameter support for filtering and formatting
 - JSON data input for POST/PUT requests
-- Pretty-printed JSON output
+- Multiple output formats: JSON, pretty JSON, and table
+- Table output with automatic field detection for common FortiGate objects
+- Customizable table fields and formatting
 - Comprehensive error handling
 - Debug mode support
 
 ## Installation
 
+### Option 1: Using Virtual Environment (Recommended)
+
+Using a virtual environment is the recommended approach as it isolates the project dependencies from your system Python installation.
+
 1. Clone or download this repository
-2. Install the required packages:
+2. Create and activate a virtual environment:
    ```bash
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests
+   # Create virtual environment
+   python3 -m venv fgt_api_env
+   
+   # Activate virtual environment
+   # On Linux/macOS:
+   source fgt_api_env/bin/activate
+   
+   # On Windows:
+   # fgt_api_env\Scripts\activate
    ```
+3. Install the required packages:
+   ```bash
+   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
+   ```
+   
+   Or use the requirements file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. When finished, you can deactivate the virtual environment:
+   ```bash
+   deactivate
+   ```
+
+### Option 2: Global Python Installation
+
+If you prefer to install packages globally (not recommended for production environments):
+
+1. Clone or download this repository
+2. Install the required packages globally:
+   ```bash
+   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
+   ```
+   
+   Or use the requirements file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+**Note:** Global installation may cause conflicts with other Python projects on your system. Virtual environments are strongly recommended.
 
 ## Usage
 
@@ -46,8 +91,11 @@ The application accepts various command-line arguments for configuration and API
 - `--ssl-warnings`: Enable SSL warnings (disabled by default for cleaner output)
 - `--timeout`: Request timeout in seconds (default: 300)
 - `--debug`: Enable debug mode
-- `--no-pretty`: Disable pretty print JSON output (pretty print is enabled by default)
-- `--pretty`: Enable pretty print JSON output (default, kept for compatibility)
+- `--format`: Output format - json, pretty, or table (default: table)
+
+#### Table Output Options
+- `--table-fields`: Comma-separated list of fields to include in table output
+- `--table-max-width`: Maximum width for table cell content (default: 50)
 
 ### Examples
 
@@ -56,7 +104,7 @@ The application accepts various command-line arguments for configuration and API
 # Get all firewall address objects
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
 
-# Get address objects with filtering and formatting
+# Get address objects with filtering and formatting (table format is default)
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address -q 'vdom=root' -q 'format=name' -q 'filter=name==test_object'
 
 # Create a new address object
@@ -70,15 +118,66 @@ python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m put -e /cmdb/firewa
 
 # Delete an address object
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m delete -e /cmdb/firewall/address/test_host
+
+# Get address objects (default table format)
+python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
+
+# Get address objects in table format with specific fields
+python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --table-fields name,subnet,type,comment
+
+# Get firewall policies with specific fields
+python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --table-fields policyid,name,srcintf,dstintf,action,status
 ```
+
+#### Table Output Examples
+
+**Note: Table format is now the default output format for better readability of FortiGate API responses.**
+
+The table output format provides a clean, readable view of FortiGate API responses. Here are some examples:
+
+### Sample Address Objects Output
+```
+FortiGate API: /cmdb/firewall/address (4 result(s))
++----------------------+-------------+--------+-----------------------------+
+| name                 | subnet      | type   | comment                     |
++======================+=============+========+=============================+
+| FIREWALL_AUTH_PORTAL | 0.0.0.0/0   | ipmask | Authentication portal       |
++----------------------+-------------+--------+-----------------------------+
+| all                  | 0.0.0.0/0   | ipmask |                             |
++----------------------+-------------+--------+-----------------------------+
+| google-dns           | 8.8.8.8/32  | ipmask | Google DNS Server           |
++----------------------+-------------+--------+-----------------------------+
+| test_host            | 10.1.1.1/32 | ipmask | Test server for development |
++----------------------+-------------+--------+-----------------------------+
+```
+
+### Sample Firewall Policy Output
+```
+FortiGate API: /cmdb/firewall/policy (2 result(s))
++------------+-----------------+---------------+-----------+-----------+-----------+
+|   policyid | name            | srcintf       | dstintf   | srcaddr   | dstaddr   |
++============+=================+===============+===========+===========+===========+
+|          1 | Allow-Internal  | internal, dmz | wan1      | all       | all       |
++------------+-----------------+---------------+-----------+-----------+-----------+
+|          2 | Block-Bad-Sites | internal      | wan1      | all       | bad-sites |
++------------+-----------------+---------------+-----------+-----------+-----------+
+```
+
+### Table Features
+
+- **Auto-detection**: Automatically selects the most relevant fields for common FortiGate objects
+- **Custom fields**: Use `--table-fields` to specify exactly which fields to display
+- **Width control**: Use `--table-max-width` to limit cell content width
+- **Complex data handling**: Lists and nested objects are automatically flattened for display
+- **Clean formatting**: Uses grid-style tables with proper alignment
 
 #### Using Configuration File
 ```bash
 # Create a configuration file (see examples below)
 python3 fgt_api_client.py -c config.ini -m get -e /cmdb/firewall/address
 
-# Disable pretty printing for compact output
-python3 fgt_api_client.py -c config.ini -m get -e /cmdb/firewall/address --no-pretty
+# Get compact JSON output (override default table format)
+python3 fgt_api_client.py -c config.ini -m get -e /cmdb/firewall/address --format json
 ```
 
 #### Using Username/Password
@@ -195,11 +294,22 @@ Use the `--debug` flag to enable detailed debug output, which will show:
 3. **SSL Warnings**: By default, SSL warnings are suppressed for cleaner output. Use `--ssl-warnings` to enable them for security debugging
 4. **Configuration Files**: Protect configuration files containing credentials (use appropriate file permissions)
 
+## Migration from Previous Versions
+
+If you're upgrading from a previous version that used `--pretty` and `--no-pretty` flags:
+
+- Replace `--pretty` with `--format pretty` 
+- Replace `--no-pretty` with `--format json` 
+- Note: The default format is now table instead of pretty JSON
+
+The old flags have been removed in favor of the cleaner `--format` option. Table format is now the default for better readability of FortiGate API responses.
+
 ## Requirements
 
 - Python 3.6+
 - pyfgt library
 - requests library
+- tabulate library
 
 ## License
 

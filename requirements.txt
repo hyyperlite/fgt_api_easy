@@ -1,2 +1,3 @@
 git+https://github.com/p4r4n0y1ng/pyfgt.git
 requests
+tabulate
