@@ -123,9 +123,31 @@ class TableFormatter:
         if not isinstance(response_data, dict):
             return f"Table format not supported for response type: {type(response_data)}"
         
-        # Special handling for monitoring endpoints with time-series data
-        if endpoint and '/monitor/' in endpoint and 'results' in response_data:
-            return TableFormatter._format_monitoring_table(response_data, endpoint, max_width)
+        # Special handling for monitoring endpoints with nested dict structures
+        if (endpoint and '/monitor/' in endpoint and 'results' in response_data and 
+            isinstance(response_data['results'], dict)):
+            
+            results = response_data['results']
+            
+            # Check if this is time-series data (contains historical stats)
+            is_time_series = any(
+                isinstance(v, list) and len(v) > 0 and 
+                isinstance(v[0], dict) and 'historical' in v[0]
+                for v in results.values()
+            )
+            
+            if is_time_series:
+                return TableFormatter._format_monitoring_table(response_data, endpoint, max_width)
+            else:
+                # This is a nested dict structure (like virtual-wan health-check or system interface)
+                # Determine if this is a specialized format we need to handle
+                if 'virtual-wan' in endpoint:
+                    return TableFormatter._format_nested_dict_table(response_data, endpoint, max_width)
+                elif 'system/interface' in endpoint:
+                    return TableFormatter._format_interface_table(response_data, endpoint, max_width)
+                else:
+                    # Generic nested dict formatting
+                    return TableFormatter._format_generic_nested_dict_table(response_data, endpoint, max_width)
         
         # Extract the actual data list
         data_list = None
@@ -294,7 +316,469 @@ class TableFormatter:
             formatted_value = formatted_value[:max_width-3] + "..."
         
         return formatted_value
-
+    
+    @staticmethod
+    def _format_nested_dict_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                                 max_width: Optional[int] = None) -> str:
+        """
+        Format nested dictionary responses (like virtual-wan health-check) as tables
+        Split into multiple readable tables to fit terminal width
+        
+        Args:
+            response_data: The API response data with nested dict structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            
+        Returns:
+            Formatted table string with separate tables for each category
+        """
+        results = response_data.get('results', {})
+        
+        if not results:
+            return "No data to display"
+        
+        tables = []
+        
+        # Add header with endpoint info
+        summary = f"Virtual WAN Health Check Status"
+        if endpoint:
+            summary = f"FortiGate API: {endpoint}"
+        tables.append(summary)
+        tables.append("=" * len(summary))
+        
+        # Process each category (e.g., anycast_v4, anycast_v6)
+        for category_name, category_data in results.items():
+            if isinstance(category_data, dict):
+                # Format the category name (make it more readable)
+                formatted_category = category_name.replace('_', ' ').title()
+                
+                # Determine what fields are available by examining the data
+                all_fields = set()
+                for gw_data in category_data.values():
+                    if isinstance(gw_data, dict):
+                        all_fields.update(gw_data.keys())
+                
+                # Create multiple focused tables for better readability
+                tables.extend(TableFormatter._create_health_check_tables(
+                    category_data, formatted_category, all_fields, max_width))
+        
+        return "\n".join(tables)
+    
+    @staticmethod
+    def _create_health_check_tables(category_data: Dict[str, Any], category_name: str, 
+                                   all_fields: set, max_width: Optional[int] = None) -> List[str]:
+        """
+        Create multiple focused tables for health check data to improve readability
+        
+        Args:
+            category_data: Data for a single category (e.g., anycast_v4)
+            category_name: Formatted category name
+            all_fields: Set of all available fields
+            max_width: Maximum width for cell content
+            
+        Returns:
+            List of formatted table strings
+        """
+        tables = []
+        
+        # Table 1: Status and Performance Overview
+        if any(field in all_fields for field in ['status', 'latency', 'jitter', 'packet_loss']):
+            tables.append(f"\n{category_name} - Status & Performance:")
+            
+            headers = ['Gateway/Interface', 'Status', 'Latency (ms)', 'Jitter (ms)', 'Loss %']
+            rows = []
+            
+            for gw_name, gw_data in category_data.items():
+                if isinstance(gw_data, dict):
+                    formatted_gw = gw_name.replace('_', ' ').replace('dup', '(dup)')
+                    if max_width and len(formatted_gw) > 18:
+                        formatted_gw = formatted_gw[:15] + "..."
+                    
+                    status = TableFormatter._format_health_check_value(gw_data.get('status', '-'), 'status', max_width)
+                    latency = TableFormatter._format_health_check_value(gw_data.get('latency', '-'), 'latency', max_width)
+                    jitter = TableFormatter._format_health_check_value(gw_data.get('jitter', '-'), 'jitter', max_width)
+                    loss = TableFormatter._format_health_check_value(gw_data.get('packet_loss', '-'), 'packet_loss', max_width)
+                    
+                    rows.append([formatted_gw, status, latency, jitter, loss])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        # Table 2: Traffic Statistics (only for gateways that are up and have data)
+        active_gateways = {k: v for k, v in category_data.items() 
+                          if isinstance(v, dict) and v.get('status') == 'up' and 
+                          any(field in v for field in ['packet_sent', 'packet_received', 'tx_bandwidth', 'rx_bandwidth'])}
+        
+        if active_gateways:
+            tables.append(f"\n{category_name} - Traffic Statistics (Active Gateways Only):")
+            
+            headers = ['Gateway/Interface', 'Packets Sent', 'Packets Received', 'TX Bandwidth', 'RX Bandwidth', 'Sessions']
+            rows = []
+            
+            for gw_name, gw_data in active_gateways.items():
+                formatted_gw = gw_name.replace('_', ' ').replace('dup', '(dup)')
+                if max_width and len(formatted_gw) > 18:
+                    formatted_gw = formatted_gw[:15] + "..."
+                
+                sent = TableFormatter._format_health_check_value(gw_data.get('packet_sent', '-'), 'packet_sent', max_width)
+                received = TableFormatter._format_health_check_value(gw_data.get('packet_received', '-'), 'packet_received', max_width)
+                tx_bw = TableFormatter._format_health_check_value(gw_data.get('tx_bandwidth', '-'), 'tx_bandwidth', max_width)
+                rx_bw = TableFormatter._format_health_check_value(gw_data.get('rx_bandwidth', '-'), 'rx_bandwidth', max_width)
+                sessions = TableFormatter._format_health_check_value(gw_data.get('session', '-'), 'session', max_width)
+                
+                rows.append([formatted_gw, sent, received, tx_bw, rx_bw, sessions])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        # Table 3: SLA and Timing Details (only for active gateways)
+        if active_gateways and any('sla_targets_met' in v or 'state_changed' in v for v in active_gateways.values()):
+            tables.append(f"\n{category_name} - SLA & Timing Details (Active Gateways Only):")
+            
+            headers = ['Gateway/Interface', 'SLA Targets Met', 'State Changed']
+            rows = []
+            
+            for gw_name, gw_data in active_gateways.items():
+                formatted_gw = gw_name.replace('_', ' ').replace('dup', '(dup)')
+                if max_width and len(formatted_gw) > 18:
+                    formatted_gw = formatted_gw[:15] + "..."
+                
+                sla = TableFormatter._format_health_check_value(gw_data.get('sla_targets_met', '-'), 'sla_targets_met', max_width)
+                state_changed = TableFormatter._format_health_check_value(gw_data.get('state_changed', '-'), 'state_changed', max_width)
+                
+                rows.append([formatted_gw, sla, state_changed])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        return tables
+    
+    @staticmethod
+    def _format_health_check_value(value: Any, field_name: str, max_width: Optional[int] = None) -> str:
+        """
+        Format a health check field value based on the field type
+        
+        Args:
+            value: The value to format
+            field_name: The name of the field (used for determining format)
+            max_width: Maximum width for truncation
+            
+        Returns:
+            Formatted value string  
+        """
+        if value == '-' or value is None:
+            return '-'
+        
+        # Format based on field type
+        if field_name == 'status':
+            formatted_value = str(value)
+        elif field_name in ['latency', 'jitter']:
+            if isinstance(value, (int, float)):
+                formatted_value = f"{value:.2f}"
+            else:
+                formatted_value = str(value)
+        elif field_name == 'packet_loss':
+            if isinstance(value, (int, float)):
+                formatted_value = f"{value:.1f}%"
+            else:
+                formatted_value = str(value)
+        elif field_name in ['packet_sent', 'packet_received']:
+            if isinstance(value, (int, float)):
+                formatted_value = f"{int(value):,}"
+            else:
+                formatted_value = str(value)
+        elif field_name in ['tx_bandwidth', 'rx_bandwidth']:
+            if isinstance(value, (int, float)):
+                # Convert to more readable bandwidth units
+                if value >= 1000000:
+                    formatted_value = f"{value/1000000:.1f}M"
+                elif value >= 1000:
+                    formatted_value = f"{value/1000:.1f}K"
+                else:
+                    formatted_value = f"{int(value)}"
+            else:
+                formatted_value = str(value)
+        elif field_name == 'session':
+            if isinstance(value, (int, float)):
+                formatted_value = str(int(value))
+            else:
+                formatted_value = str(value)
+        elif field_name == 'sla_targets_met':
+            if isinstance(value, list):
+                formatted_value = f"[{','.join(map(str, value))}]"
+            else:
+                formatted_value = str(value)
+        elif field_name == 'state_changed':
+            if isinstance(value, (int, float)):
+                # Convert Unix timestamp to readable format
+                import datetime
+                try:
+                    dt = datetime.datetime.fromtimestamp(value)
+                    formatted_value = dt.strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, OSError):
+                    formatted_value = str(int(value))
+            else:
+                formatted_value = str(value)
+        else:
+            # Default formatting for unknown fields
+            if isinstance(value, (int, float)):
+                formatted_value = f"{value:.2f}" if isinstance(value, float) else str(int(value))
+            else:
+                formatted_value = str(value)
+        
+        # Truncate if max_width specified
+        if max_width and len(formatted_value) > max_width:
+            formatted_value = formatted_value[:max_width-3] + "..."
+        
+        return formatted_value
+    
+    @staticmethod
+    def _format_interface_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                               max_width: Optional[int] = None) -> str:
+        """
+        Format system interface monitoring responses as tables
+        
+        Args:
+            response_data: The API response data with interface structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            
+        Returns:
+            Formatted table string with interface statistics
+        """
+        results = response_data.get('results', {})
+        
+        if not results:
+            return "No interface data to display"
+        
+        tables = []
+        
+        # Add header with endpoint info
+        summary = f"System Interface Status & Statistics"
+        if endpoint:
+            summary = f"FortiGate API: {endpoint}"
+        tables.append(summary)
+        tables.append("=" * len(summary))
+        
+        # Create overview table with key interface information including MAC address
+        tables.append("\nInterface Overview:")
+        headers = ['Interface', 'Status', 'MAC Address', 'IP Address', 'Speed', 'Duplex', 'Alias']
+        rows = []
+        
+        for intf_name, intf_data in results.items():
+            if isinstance(intf_data, dict):
+                # Format interface name
+                formatted_name = intf_name
+                if max_width and len(formatted_name) > 12:
+                    formatted_name = formatted_name[:9] + "..."
+                
+                # Get status based on link
+                link_status = intf_data.get('link', False)
+                status = 'UP' if link_status else 'DOWN'
+                
+                # Get MAC address
+                mac = intf_data.get('mac', '')
+                if not mac or mac == '00:00:00:00:00:00':
+                    mac_display = '-'
+                else:
+                    mac_display = mac
+                    # Truncate MAC if max_width specified and it's too long
+                    if max_width and len(mac_display) > 17:
+                        mac_display = mac_display[:14] + "..."
+                
+                # Get IP address
+                ip = intf_data.get('ip', '0.0.0.0')
+                mask = intf_data.get('mask', 0)
+                if ip != '0.0.0.0' and mask > 0:
+                    ip_display = f"{ip}/{mask}"
+                elif ip != '0.0.0.0':
+                    ip_display = ip
+                else:
+                    ip_display = '-'
+                
+                # Get speed and duplex
+                speed = intf_data.get('speed', 0)
+                if speed >= 1000:
+                    speed_display = f"{speed/1000:.0f}G" if speed >= 1000 else f"{speed:.0f}M"
+                elif speed > 0:
+                    speed_display = f"{speed:.0f}M"
+                else:
+                    speed_display = '-'
+                
+                duplex = intf_data.get('duplex', -1)
+                duplex_display = 'Full' if duplex == 1 else 'Half' if duplex == 0 else '-'
+                
+                # Get alias
+                alias = intf_data.get('alias', '')
+                if not alias:
+                    alias = '-'
+                elif max_width and len(alias) > 15:
+                    alias = alias[:12] + "..."
+                
+                rows.append([formatted_name, status, mac_display, ip_display, speed_display, duplex_display, alias])
+        
+        if rows:
+            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+            tables.append(table)
+        
+        # Create traffic statistics table (only for interfaces with traffic)
+        active_interfaces = {k: v for k, v in results.items() 
+                           if isinstance(v, dict) and (v.get('tx_packets', 0) > 0 or v.get('rx_packets', 0) > 0)}
+        
+        if active_interfaces:
+            tables.append(f"\nTraffic Statistics (Active Interfaces Only):")
+            headers = ['Interface', 'TX Packets', 'RX Packets', 'TX Bytes', 'RX Bytes', 'TX Errors', 'RX Errors']
+            rows = []
+            
+            for intf_name, intf_data in active_interfaces.items():
+                formatted_name = intf_name
+                if max_width and len(formatted_name) > 12:
+                    formatted_name = formatted_name[:9] + "..."
+                
+                tx_packets = TableFormatter._format_interface_value(intf_data.get('tx_packets', 0), 'packets')
+                rx_packets = TableFormatter._format_interface_value(intf_data.get('rx_packets', 0), 'packets')
+                tx_bytes = TableFormatter._format_interface_value(intf_data.get('tx_bytes', 0), 'bytes')
+                rx_bytes = TableFormatter._format_interface_value(intf_data.get('rx_bytes', 0), 'bytes')
+                tx_errors = TableFormatter._format_interface_value(intf_data.get('tx_errors', 0), 'errors')
+                rx_errors = TableFormatter._format_interface_value(intf_data.get('rx_errors', 0), 'errors')
+                
+                rows.append([formatted_name, tx_packets, rx_packets, tx_bytes, rx_bytes, tx_errors, rx_errors])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        return "\n".join(tables)
+    
+    @staticmethod
+    def _format_interface_value(value: Any, value_type: str) -> str:
+        """
+        Format interface values based on type
+        
+        Args:
+            value: The value to format
+            value_type: Type of value (packets, bytes, errors)
+            
+        Returns:
+            Formatted value string
+        """
+        if not isinstance(value, (int, float)) or value == 0:
+            return '0' if value_type == 'errors' else '0'
+        
+        if value_type == 'bytes':
+            # Format bytes in human readable format
+            if value >= 1024**3:  # GB
+                return f"{value/(1024**3):.1f}G"
+            elif value >= 1024**2:  # MB
+                return f"{value/(1024**2):.1f}M"
+            elif value >= 1024:  # KB
+                return f"{value/1024:.1f}K"
+            else:
+                return str(int(value))
+        elif value_type == 'packets':
+            # Format packet counts with commas
+            if value >= 1000000:
+                return f"{value/1000000:.1f}M"
+            elif value >= 1000:
+                return f"{value/1000:.1f}K"
+            else:
+                return f"{int(value):,}"
+        else:  # errors
+            return str(int(value))
+    
+    @staticmethod
+    def _format_generic_nested_dict_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                                         max_width: Optional[int] = None) -> str:
+        """
+        Generic formatter for nested dict monitoring responses
+        
+        Args:
+            response_data: The API response data with nested dict structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            
+        Returns:
+            Formatted table string
+        """
+        results = response_data.get('results', {})
+        
+        if not results:
+            return "No data to display"
+        
+        # Check if this is a flat key-value dict (like system status) or nested objects
+        has_nested_objects = any(isinstance(v, dict) for v in results.values())
+        
+        if has_nested_objects:
+            # Convert nested dict to list format for standard table processing  
+            data_list = []
+            for key, value in results.items():
+                if isinstance(value, dict):
+                    # Add the key as a 'name' field
+                    item = {'name': key}
+                    item.update(value)
+                    data_list.append(item)
+            
+            if not data_list:
+                return "No data to display in table format"
+            
+            # Use standard table formatting logic
+            fields = TableFormatter._detect_fields(data_list, endpoint)
+            
+            if not fields:
+                return "No suitable fields found for table display"
+            
+            # Prepare table data
+            headers = fields
+            rows = []
+            
+            for item in data_list:
+                row = []
+                for field in fields:
+                    value = item.get(field, "-")
+                    formatted_value = TableFormatter._flatten_value(value)
+                    
+                    # Truncate if max_width specified
+                    if max_width and len(formatted_value) > max_width:
+                        formatted_value = formatted_value[:max_width-3] + "..."
+                    
+                    row.append(formatted_value)
+                rows.append(row)
+            
+            # Generate table
+            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+            
+            # Add summary info
+            summary = f"FortiGate API: {endpoint} ({len(data_list)} result(s))" if endpoint else f"{len(data_list)} result(s) found"
+            
+            return f"{summary}\n{table}"
+        
+        else:
+            # Handle flat key-value pairs (like system status)
+            summary = f"FortiGate API: {endpoint}" if endpoint else "System Information"
+            
+            headers = ['Property', 'Value']
+            rows = []
+            
+            for key, value in results.items():
+                # Format key for readability
+                formatted_key = key.replace('_', ' ').title()
+                
+                # Format value
+                formatted_value = TableFormatter._flatten_value(value)
+                if max_width and len(formatted_value) > max_width:
+                    formatted_value = formatted_value[:max_width-3] + "..."
+                
+                rows.append([formatted_key, formatted_value])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                return f"{summary}\n{table}"
+            else:
+                return "No data to display"
+    
 
 class FortiGateAPIClient:
     """FortiGate API Client wrapper class"""
