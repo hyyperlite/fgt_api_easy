@@ -1,0 +1,14 @@
+# Example configuration file for FortiGate API Client (INI format)
+
+[fortigate]
+host = 192.168.1.99
+apikey = your_api_key_here
+# Alternative: use username/password instead of API key
+# username = admin
+# password = your_password_here
+
+# Optional settings
+# use_ssl = true
+# verify_ssl = false  
+# timeout = 300
+# debug = false

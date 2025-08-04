@@ -1,0 +1,14 @@
+#!/bin/bash
+# FortiGate API Client Wrapper Script
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_SCRIPT="$SCRIPT_DIR/fgt_api_client.py"
+
+# Check if the main script exists
+if [[ ! -f "$PYTHON_SCRIPT" ]]; then
+    echo "Error: fgt_api_client.py not found in $SCRIPT_DIR"
+    exit 1
+fi
+
+# Pass all arguments to the Python script
+python3 "$PYTHON_SCRIPT" "$@"
