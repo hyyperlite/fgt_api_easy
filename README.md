@@ -96,6 +96,7 @@ The application accepts various command-line arguments for configuration and API
 #### Table Output Options
 - `--table-fields`: Comma-separated list of fields to include in table output
 - `--table-max-width`: Maximum width for table cell content (default: 50)
+- `--table-max-fields`: Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)
 
 ### Examples
 
@@ -127,6 +128,12 @@ python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewa
 
 # Get firewall policies with specific fields
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --table-fields policyid,name,srcintf,dstintf,action,status
+
+# Get LLDP neighbors with unlimited fields (show all available data)
+python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 0
+
+# Get LLDP neighbors with limited fields (default is 6)
+python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 8
 ```
 
 #### Table Output Examples
@@ -166,10 +173,23 @@ FortiGate API: /cmdb/firewall/policy (2 result(s))
 ### Table Features
 
 - **Auto-detection**: Automatically selects the most relevant fields for common FortiGate objects
+- **Field limiting**: By default, limits display to 6 most relevant fields for readability (use `--table-max-fields 0` for unlimited)
 - **Custom fields**: Use `--table-fields` to specify exactly which fields to display
 - **Width control**: Use `--table-max-width` to limit cell content width
 - **Complex data handling**: Lists and nested objects are automatically flattened for display
 - **Clean formatting**: Uses grid-style tables with proper alignment
+- **Special formatters**: Some endpoints (like VPN IPsec and certificates) use multi-table layouts for comprehensive data display
+
+### Field Display Control
+
+By default, table output is limited to 6 fields to maintain readability on standard terminal widths. This is especially useful for endpoints with many fields (like LLDP neighbors which can have 10+ fields). You can control this behavior:
+
+- **Default**: Shows 6 most relevant fields: `--table-max-fields 6` (or omit the option)
+- **Unlimited**: Shows all available fields: `--table-max-fields 0`  
+- **Custom limit**: Shows specific number of fields: `--table-max-fields 8`
+- **Exact fields**: Override auto-detection entirely: `--table-fields field1,field2,field3`
+
+**Example**: LLDP neighbors normally shows fields like `mac`, `chassis_id`, `port`, `port_name`, `port_id`, `system_name` (6 fields), but with `--table-max-fields 0` you'll also see `system_desc`, `ttl`, `port_desc`, and `addresses`.
 
 #### Using Configuration File
 ```bash

@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 import configparser
+import datetime
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List, Union
 import warnings
@@ -50,6 +51,8 @@ class TableFormatter:
         '/monitor/system/status': ['hostname', 'model', 'version', 'serial'],
         '/monitor/system/interface': ['name', 'rx_bytes', 'tx_bytes', 'status'],
         '/monitor/router/ipv4': ['ip_dst', 'gateway', 'interface', 'distance'],
+        '/monitor/vpn/ipsec': ['name', 'rgwy', 'tun_id', 'incoming_bytes', 'outgoing_bytes'],
+        '/monitor/system/available-certificates': ['name', 'type', 'status', 'key_type', 'key_size', 'valid_to'],
     }
     
     @staticmethod
@@ -77,10 +80,29 @@ class TableFormatter:
             return str(value)
     
     @staticmethod
-    def _detect_fields(data: List[Dict[str, Any]], endpoint: Optional[str] = None, max_fields: int = 6) -> List[str]:
+    def _detect_fields(data: List[Dict[str, Any]], endpoint: Optional[str] = None, max_fields: Optional[int] = None) -> List[str]:
         """Auto-detect the most relevant fields from the data"""
         if not data:
             return []
+        
+        # Handle max_fields parameter:
+        # - If max_fields is None, use default of 6
+        # - If max_fields is 0, use unlimited (999)
+        # - Otherwise use the specified value
+        if max_fields is None:
+            max_fields = 6
+        elif max_fields == 0:
+            max_fields = 999
+        
+        # Determine if this endpoint has special handling
+        has_special_formatter = False
+        if endpoint:
+            special_endpoints = ['/monitor/vpn/ipsec', '/monitor/system/available-certificates']
+            has_special_formatter = any(special in endpoint for special in special_endpoints)
+        
+        # For endpoints with special formatters, don't limit fields (they handle their own display)
+        if has_special_formatter:
+            max_fields = 999
         
         # Try predefined mapping first
         if endpoint:
@@ -106,7 +128,8 @@ class TableFormatter:
     
     @staticmethod
     def format_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
-                    custom_fields: Optional[List[str]] = None, max_width: Optional[int] = None) -> str:
+                    custom_fields: Optional[List[str]] = None, max_width: Optional[int] = None,
+                    max_fields: Optional[int] = None) -> str:
         """
         Format API response data as a table
         
@@ -115,6 +138,7 @@ class TableFormatter:
             endpoint: The API endpoint (used for field detection)
             custom_fields: Specific fields to include in the table
             max_width: Maximum width for cell content (truncate if longer)
+            max_fields: Maximum number of fields to auto-detect (None for unlimited)
             
         Returns:
             Formatted table string
@@ -149,6 +173,25 @@ class TableFormatter:
                     # Generic nested dict formatting
                     return TableFormatter._format_generic_nested_dict_table(response_data, endpoint, max_width)
         
+        # Special handling for interface endpoints (both /cmdb and /monitor)
+        if (endpoint and 'system/interface' in endpoint and 'results' in response_data and not custom_fields):
+            if isinstance(response_data['results'], list):
+                # CMDB interface configuration (list format)
+                return TableFormatter._format_cmdb_interface_table(response_data, endpoint, max_width, max_fields)
+            elif isinstance(response_data['results'], dict):
+                # Monitor interface statistics (dict format)
+                return TableFormatter._format_interface_table(response_data, endpoint, max_width, max_fields)
+        
+        # Special handling for VPN IPsec monitoring (list format)
+        if (endpoint and '/monitor/vpn/ipsec' in endpoint and 'results' in response_data and 
+            isinstance(response_data['results'], list) and not custom_fields):
+            return TableFormatter._format_vpn_ipsec_table(response_data, endpoint, max_width)
+        
+        # Special handling for available certificates monitoring (list format)
+        if (endpoint and '/monitor/system/available-certificates' in endpoint and 'results' in response_data and 
+            isinstance(response_data['results'], list) and not custom_fields):
+            return TableFormatter._format_certificates_table(response_data, endpoint, max_width)
+        
         # Extract the actual data list
         data_list = None
         if 'results' in response_data:
@@ -168,7 +211,7 @@ class TableFormatter:
         if custom_fields:
             fields = custom_fields
         else:
-            fields = TableFormatter._detect_fields(data_list, endpoint)
+            fields = TableFormatter._detect_fields(data_list, endpoint, max_fields)
         
         if not fields:
             return "No suitable fields found for table display"
@@ -536,8 +579,317 @@ class TableFormatter:
         return formatted_value
     
     @staticmethod
+    def _format_cmdb_interface_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                                    max_width: Optional[int] = None, max_fields: Optional[int] = None) -> str:
+        """
+        Format CMDB system interface configuration responses as multiple tables
+        
+        Args:
+            response_data: The API response data with interface configuration structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            max_fields: Maximum number of fields per table
+            
+        Returns:
+            Formatted table string with multiple interface configuration tables
+        """
+        results = response_data.get('results', [])
+        
+        if not results:
+            return "No interface configuration data to display"
+        
+        # If the result doesn't contain 'name' field but we have mkey, add it
+        # This happens when using field filters that don't include 'name'
+        mkey = response_data.get('mkey')
+        if mkey and all('name' not in interface for interface in results):
+            # Single interface query - we can get the name from mkey
+            for interface in results:
+                interface['name'] = mkey
+        elif all('name' not in interface for interface in results) and len(results) > 1:
+            # Multiple interface query with filtered fields - note the limitation
+            # We could make a separate API call to get names, but for now just add a note
+            pass  # Will show a note in the output
+        
+        # Handle max_fields parameter (default to 6 if None, unlimited if 0)
+        if max_fields is None:
+            max_fields = 6
+        elif max_fields == 0:
+            max_fields = 999
+        
+        tables = []
+        
+        # Add header with endpoint info
+        summary = f"Interface Configuration Details"
+        if endpoint:
+            summary = f"FortiGate API: {endpoint}"
+        tables.append(summary)
+        tables.append("=" * len(summary))
+        
+        # Define field groups for logical organization
+        field_groups = {
+            'Basic Information': [
+                'name', 'alias', 'description', 'type', 'status', 'vdom', 'role', 'dedicated-to'
+            ],
+            'Network Configuration': [
+                'mode', 'ip', 'management-ip', 'defaultgw', 'distance', 'priority', 'mtu', 'mtu-override'
+            ],
+            'Physical Properties': [
+                'speed', 'mediatype', 'macaddr', 'devindex', 'snmp-index'
+            ],
+            'DHCP & DNS Settings': [
+                'dhcp-relay-service', 'dhcp-relay-ip', 'dhcp-relay-interface', 'dns-server-override', 
+                'dns-server-protocol', 'dhcp-broadcast-flag'
+            ],
+            'Security & Access': [
+                'allowaccess', 'security-mode', 'security-8021x-mode', 'captive-portal', 
+                'explicit-web-proxy', 'explicit-ftp-proxy'
+            ],
+            'Traffic Shaping': [
+                'inbandwidth', 'outbandwidth', 'egress-shaping-profile', 'ingress-shaping-profile',
+                'weight', 'spillover-threshold'
+            ],
+            'Advanced Features': [
+                'fortilink', 'switch-controller-feature', 'monitor-bandwidth', 'device-identification',
+                'lldp-reception', 'lldp-transmission', 'bfd'
+            ],
+            'VLAN & Aggregation': [
+                'vlan-protocol', 'vlanid', 'trunk', 'member', 'lacp-mode', 'algorithm', 'min-links'
+            ]
+        }
+        
+        # Collect all fields present in the API response
+        all_fields_in_response = set()
+        for interface in results:
+            all_fields_in_response.update(interface.keys())
+        
+        # Check if this appears to be a filtered query (small number of fields returned)
+        # If so, show all fields in a single table rather than trying to group them
+        total_fields_in_response = len(all_fields_in_response)
+        is_likely_filtered = total_fields_in_response <= 10  # Up to 10 fields suggests a filter (was 3)
+        
+        if is_likely_filtered:
+            # For filtered queries, show all fields in a single table with name first
+            all_fields = list(all_fields_in_response)
+            if 'q_origin_key' in all_fields:
+                all_fields.remove('q_origin_key')  # Remove internal fields
+            
+            # Ensure name is first if present
+            if 'name' in all_fields:
+                all_fields.remove('name')
+                all_fields.insert(0, 'name')
+            
+            # Respect max_fields limit
+            limited_fields = all_fields[:max_fields]
+            
+            if limited_fields:
+                tables.append(f"\nInterface Details:")
+                headers = [field.replace('-', ' ').title() for field in limited_fields]
+                rows = []
+                
+                for interface in results:
+                    row = []
+                    for field in limited_fields:
+                        value = interface.get(field)
+                        formatted_value = TableFormatter._format_cmdb_interface_value(value, field, max_width)
+                        row.append(formatted_value)
+                    rows.append(row)
+                
+                if rows:
+                    table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                    tables.append(table)
+                    
+                    # Add truncation note if needed
+                    if len(all_fields) > len(limited_fields):
+                        truncated_count = len(all_fields) - len(limited_fields)
+                        tables.append(f"  Note: {truncated_count} additional field(s) not shown. Use --table-max-fields 0 for all fields.")
+        else:
+            # For non-filtered queries, use the existing group-based approach
+            # Track which fields have been displayed in tables
+            displayed_fields = set()
+            
+            # Create tables for each field group, respecting max_fields limit
+            for group_name, group_fields in field_groups.items():
+                # Check if any interfaces have data for fields in this group
+                relevant_fields = []
+                for field in group_fields:
+                    if field in all_fields_in_response and any(field in interface and interface.get(field) not in [None, '', '0.0.0.0', '0.0.0.0 0.0.0.0', 0, False, 'disable', []] 
+                           for interface in results):
+                        relevant_fields.append(field)
+                
+                if not relevant_fields:
+                    continue  # Skip groups with no relevant data
+                
+                # Always include 'name' as the first field, but avoid duplicating it if it's already in the group
+                if 'name' in relevant_fields:
+                    # 'name' is already in this group, just limit the fields
+                    limited_fields = relevant_fields[:max_fields]
+                else:
+                    # 'name' not in this group, add it as first field and limit remaining fields
+                    remaining_max_fields = max_fields - 1 if max_fields > 1 else 1
+                    limited_fields = ['name'] + relevant_fields[:remaining_max_fields]
+                
+                # Create table for this group
+                tables.append(f"\n{group_name}:")
+                headers = [field.replace('-', ' ').title() for field in limited_fields]
+                rows = []
+                
+                for interface in results:
+                    row = []
+                    for field in limited_fields:
+                        value = interface.get(field)
+                        formatted_value = TableFormatter._format_cmdb_interface_value(value, field, max_width)
+                        row.append(formatted_value)
+                    rows.append(row)
+                
+                if rows:
+                    table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                    tables.append(table)
+                    
+                    # Track which fields were displayed
+                    displayed_fields.update(limited_fields)
+                    
+                    # Add note if fields were truncated
+                    original_field_count = len(relevant_fields)
+                    if 'name' not in relevant_fields:
+                        # If name wasn't in the original group, account for it in the truncation calculation
+                        if original_field_count > max_fields - 1:
+                            truncated_count = original_field_count - (max_fields - 1)
+                            tables.append(f"  Note: {truncated_count} additional field(s) not shown. Use --table-max-fields 0 for all fields.")
+                    else:
+                        # If name was in the original group, use standard truncation calculation
+                        if original_field_count > max_fields:
+                            truncated_count = original_field_count - max_fields
+                            tables.append(f"  Note: {truncated_count} additional field(s) not shown. Use --table-max-fields 0 for all fields.")
+            
+            # Handle any fields that weren't displayed in any group
+            undisplayed_fields = all_fields_in_response - displayed_fields
+            if undisplayed_fields:
+                # Remove common fields that we don't want to display separately
+                undisplayed_fields.discard('q_origin_key')  # Internal FortiGate field
+                
+                if undisplayed_fields:
+                    additional_fields = list(undisplayed_fields)
+                    
+                    # Add name if it wasn't displayed meaningfully elsewhere
+                    if 'name' in all_fields_in_response and 'name' not in displayed_fields:
+                        additional_fields.insert(0, 'name')
+                    
+                    # Respect max_fields limit
+                    limited_additional_fields = additional_fields[:max_fields]
+                    
+                    # Create table for additional fields
+                    if limited_additional_fields:
+                        tables.append(f"\nAdditional Fields:")
+                        headers = [field.replace('-', ' ').title() for field in limited_additional_fields]
+                        rows = []
+                        
+                        for interface in results:
+                            row = []
+                            for field in limited_additional_fields:
+                                value = interface.get(field)
+                                formatted_value = TableFormatter._format_cmdb_interface_value(value, field, max_width)
+                                row.append(formatted_value)
+                            rows.append(row)
+                        
+                        if rows:
+                            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                            tables.append(table)
+                            
+                            # Add truncation note if needed
+                            if len(additional_fields) > len(limited_additional_fields):
+                                truncated_count = len(additional_fields) - len(limited_additional_fields)
+                                tables.append(f"  Note: {truncated_count} additional field(s) not shown. Use --table-max-fields 0 for all fields.")
+        
+        return "\n".join(tables)
+    
+    @staticmethod
+    def _format_cmdb_interface_value(value: Any, field_name: str, max_width: Optional[int] = None) -> str:
+        """
+        Format CMDB interface field values based on field type
+        
+        Args:
+            value: The value to format
+            field_name: The name of the field (used for determining format)
+            max_width: Maximum width for truncation
+            
+        Returns:
+            Formatted value string  
+        """
+        if value is None or value == '' or value == [] or value == {}:
+            return '-'
+        
+        # Handle different value types
+        if isinstance(value, bool):
+            return 'Yes' if value else 'No'
+        elif isinstance(value, list):
+            if not value:
+                return '-'
+            # Handle list of objects with 'name' field
+            if isinstance(value[0], dict) and 'name' in value[0]:
+                formatted_value = ", ".join([item['name'] for item in value if 'name' in item])
+            else:
+                formatted_value = ", ".join([str(item) for item in value])
+        elif isinstance(value, dict):
+            # For dictionaries, try to get a meaningful representation
+            if 'name' in value:
+                formatted_value = value['name']
+            else:
+                formatted_value = str(value)
+        else:
+            formatted_value = str(value)
+        
+        # Special formatting for specific fields
+        if field_name == 'speed':
+            # Parse speed format like "10000full" 
+            if 'full' in formatted_value or 'half' in formatted_value:
+                speed_num = ''.join(filter(str.isdigit, formatted_value))
+                duplex = 'Full' if 'full' in formatted_value else 'Half'
+                if speed_num:
+                    speed_val = int(speed_num)
+                    if speed_val >= 1000:
+                        formatted_value = f"{speed_val//1000}G {duplex}"
+                    else:
+                        formatted_value = f"{speed_val}M {duplex}"
+        elif field_name in ['ip', 'management-ip'] and formatted_value not in ['-', '0.0.0.0', '0.0.0.0 0.0.0.0']:
+            # Format IP addresses - handle both "ip netmask" and "ip/cidr" formats
+            if ' ' in formatted_value and '/' not in formatted_value:
+                parts = formatted_value.split()
+                if len(parts) == 2 and parts[1] != '0.0.0.0':
+                    # Convert netmask to CIDR if possible
+                    try:
+                        import ipaddress
+                        cidr = ipaddress.IPv4Network(f"{parts[0]}/{parts[1]}", strict=False).prefixlen
+                        formatted_value = f"{parts[0]}/{cidr}"
+                    except:
+                        pass  # Keep original format if conversion fails
+        elif field_name in ['inbandwidth', 'outbandwidth'] and formatted_value != '-':
+            # Format bandwidth values
+            try:
+                bw_val = int(formatted_value)
+                if bw_val == 0:
+                    formatted_value = 'Unlimited'
+                elif bw_val >= 1000000:
+                    formatted_value = f"{bw_val//1000000}G"
+                elif bw_val >= 1000:
+                    formatted_value = f"{bw_val//1000}M"
+                else:
+                    formatted_value = f"{bw_val}K"
+            except ValueError:
+                pass  # Keep original value if not a number
+        
+        # Apply common cleanup
+        if formatted_value in ['0', '0.0.0.0', '0.0.0.0 0.0.0.0', 'disable', 'none', 'undefined']:
+            formatted_value = '-'
+        
+        # Truncate if max_width specified
+        if max_width and len(formatted_value) > max_width:
+            formatted_value = formatted_value[:max_width-3] + "..."
+        
+        return formatted_value
+
+    @staticmethod
     def _format_interface_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
-                               max_width: Optional[int] = None) -> str:
+                               max_width: Optional[int] = None, max_fields: Optional[int] = None) -> str:
         """
         Format system interface monitoring responses as tables
         
@@ -725,7 +1077,7 @@ class TableFormatter:
                 return "No data to display in table format"
             
             # Use standard table formatting logic
-            fields = TableFormatter._detect_fields(data_list, endpoint)
+            fields = TableFormatter._detect_fields(data_list, endpoint, None)
             
             if not fields:
                 return "No suitable fields found for table display"
@@ -778,6 +1130,424 @@ class TableFormatter:
                 return f"{summary}\n{table}"
             else:
                 return "No data to display"
+    
+    @staticmethod
+    def _format_vpn_ipsec_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                               max_width: Optional[int] = None) -> str:
+        """
+        Format VPN IPsec monitoring responses as tables
+        
+        Args:
+            response_data: The API response data with VPN IPsec structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            
+        Returns:
+            Formatted table string with VPN IPsec tunnel information
+        """
+        results = response_data.get('results', [])
+        
+        if not results:
+            return "No VPN IPsec tunnels to display"
+        
+        tables = []
+        
+        # Add header with endpoint info
+        summary = f"VPN IPsec Tunnel Status & Statistics"
+        if endpoint:
+            summary = f"FortiGate API: {endpoint}"
+        tables.append(summary)
+        tables.append("=" * len(summary))
+        
+        # Create overview table with key tunnel information
+        tables.append("\nTunnel Overview:")
+        headers = ['Tunnel Name', 'Status', 'Remote Gateway', 'Tunnel ID', 'Connections', 'Creation Time']
+        rows = []
+        
+        for tunnel in results:
+            if isinstance(tunnel, dict):
+                # Format tunnel name
+                name = tunnel.get('name', '-')
+                if max_width and len(name) > 15:
+                    name = name[:12] + "..."
+                
+                # Determine overall tunnel status based on proxyid entries
+                proxyid_list = tunnel.get('proxyid', [])
+                tunnel_status = 'DOWN'
+                if proxyid_list:
+                    # Check if any phase2 is up
+                    for proxy in proxyid_list:
+                        if isinstance(proxy, dict) and proxy.get('status') == 'up':
+                            tunnel_status = 'UP'
+                            break
+                
+                # Get remote gateway
+                rgwy = tunnel.get('rgwy', '-')
+                
+                # Get tunnel ID (prefer IPv4)
+                tun_id = tunnel.get('tun_id', tunnel.get('tun_id6', '-'))
+                
+                # Get connection count
+                conn_count = tunnel.get('connection_count', 0)
+                conn_display = str(conn_count) if conn_count > 0 else '-'
+                
+                # Get creation time (convert seconds to readable format)
+                creation_time = tunnel.get('creation_time', 0)
+                if creation_time > 0:
+                    hours = creation_time // 3600
+                    minutes = (creation_time % 3600) // 60
+                    if hours > 24:
+                        days = hours // 24
+                        hours = hours % 24
+                        time_display = f"{days}d {hours}h"
+                    elif hours > 0:
+                        time_display = f"{hours}h {minutes}m"
+                    else:
+                        time_display = f"{minutes}m"
+                else:
+                    time_display = '-'
+                
+                rows.append([name, tunnel_status, rgwy, tun_id, conn_display, time_display])
+        
+        if rows:
+            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+            tables.append(table)
+        
+        # Create traffic statistics table (only for tunnels with traffic)
+        active_tunnels = [t for t in results 
+                         if isinstance(t, dict) and (t.get('incoming_bytes', 0) > 0 or t.get('outgoing_bytes', 0) > 0)]
+        
+        if active_tunnels:
+            tables.append(f"\nTraffic Statistics (Active Tunnels Only):")
+            headers = ['Tunnel Name', 'RX Bytes', 'TX Bytes', 'Total Traffic', 'RX/TX Ratio']
+            rows = []
+            
+            for tunnel in active_tunnels:
+                name = tunnel.get('name', '-')
+                if max_width and len(name) > 15:
+                    name = name[:12] + "..."
+                
+                rx_bytes = tunnel.get('incoming_bytes', 0)
+                tx_bytes = tunnel.get('outgoing_bytes', 0)
+                
+                rx_display = TableFormatter._format_bytes(rx_bytes)
+                tx_display = TableFormatter._format_bytes(tx_bytes)
+                total_display = TableFormatter._format_bytes(rx_bytes + tx_bytes)
+                
+                # Calculate ratio
+                if tx_bytes > 0:
+                    ratio = rx_bytes / tx_bytes
+                    ratio_display = f"{ratio:.2f}"
+                else:
+                    ratio_display = "∞" if rx_bytes > 0 else "0"
+                
+                rows.append([name, rx_display, tx_display, total_display, ratio_display])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        # Create Phase 2 (proxy ID) details table - only for tunnels with UP proxies
+        up_proxies = []
+        for tunnel in results:
+            if isinstance(tunnel, dict):
+                tunnel_name = tunnel.get('name', 'Unknown')
+                proxyid_list = tunnel.get('proxyid', [])
+                for proxy in proxyid_list:
+                    if isinstance(proxy, dict) and proxy.get('status') == 'up':
+                        proxy['tunnel_name'] = tunnel_name
+                        up_proxies.append(proxy)
+        
+        if up_proxies:
+            tables.append(f"\nActive Phase 2 (Proxy ID) Details:")
+            headers = ['Tunnel', 'Phase 2 Name', 'Status', 'Time Remaining', 'RX Bytes', 'TX Bytes']
+            rows = []
+            
+            for proxy in up_proxies:
+                tunnel_name = proxy.get('tunnel_name', '-')
+                if max_width and len(tunnel_name) > 12:
+                    tunnel_name = tunnel_name[:9] + "..."
+                
+                p2name = proxy.get('p2name', '-')
+                if max_width and len(p2name) > 15:
+                    p2name = p2name[:12] + "..."
+                
+                status = proxy.get('status', '-').upper()
+                
+                # Format expire time
+                expire = proxy.get('expire', 0)
+                if expire > 0:
+                    hours = expire // 3600
+                    minutes = (expire % 3600) // 60
+                    seconds = expire % 60
+                    if hours > 0:
+                        expire_display = f"{hours}h {minutes}m"
+                    elif minutes > 0:
+                        expire_display = f"{minutes}m {seconds}s"
+                    else:
+                        expire_display = f"{seconds}s"
+                else:
+                    expire_display = '-'
+                
+                rx_bytes = proxy.get('incoming_bytes', 0)
+                tx_bytes = proxy.get('outgoing_bytes', 0)
+                
+                rx_display = TableFormatter._format_bytes(rx_bytes)
+                tx_display = TableFormatter._format_bytes(tx_bytes)
+                
+                rows.append([tunnel_name, p2name, status, expire_display, rx_display, tx_display])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        return "\n".join(tables)
+    
+    @staticmethod
+    def _format_bytes(bytes_val: int) -> str:
+        """
+        Format byte values in human readable format
+        
+        Args:
+            bytes_val: Byte value to format
+            
+        Returns:
+            Formatted byte string
+        """
+        if bytes_val == 0:
+            return '0B'
+        elif bytes_val >= 1024**3:  # GB
+            return f"{bytes_val/(1024**3):.1f}G"
+        elif bytes_val >= 1024**2:  # MB
+            return f"{bytes_val/(1024**2):.1f}M"
+        elif bytes_val >= 1024:  # KB
+            return f"{bytes_val/1024:.1f}K"
+        else:
+            return f"{bytes_val}B"
+    
+    @staticmethod
+    def _format_certificates_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
+                                  max_width: Optional[int] = None) -> str:
+        """
+        Format available certificates monitoring responses as tables
+        
+        Args:
+            response_data: The API response data with certificates structure
+            endpoint: The API endpoint 
+            max_width: Maximum width for cell content
+            
+        Returns:
+            Formatted table string with certificate information
+        """
+        results = response_data.get('results', [])
+        
+        if not results:
+            return "No certificates to display"
+        
+        tables = []
+        
+        # Add header with endpoint info
+        summary = f"System Available Certificates - Overview & Details"
+        if endpoint:
+            summary = f"FortiGate API: {endpoint}"
+        tables.append(summary)
+        tables.append("=" * len(summary))
+        
+        # Create overview table with key certificate information
+        tables.append("\nCertificate Overview:")
+        headers = ['Name', 'Type', 'Source', 'Status', 'Key Type', 'Key Size', 'CA', 'Usage']
+        rows = []
+        
+        for cert in results:
+            if isinstance(cert, dict):
+                # Format certificate name
+                name = cert.get('name', '-')
+                if max_width and len(name) > 20:
+                    name = name[:17] + "..."
+                
+                # Get certificate type
+                cert_type = cert.get('type', '-')
+                if cert_type == 'local-cer':
+                    type_display = 'Local'
+                elif cert_type == 'local-ca':
+                    type_display = 'Local CA'
+                else:
+                    type_display = cert_type.title() if cert_type != '-' else '-'
+                
+                # Get source
+                source = cert.get('source', '-').title()
+                
+                # Get status
+                status = cert.get('status', '-')
+                status_display = status.upper() if status != '-' else '-'
+                
+                # Get key information
+                key_type = cert.get('key_type', '-')
+                key_size = cert.get('key_size', 0)
+                key_display = f"{key_type} {key_size}" if key_type != '-' and key_size > 0 else key_type if key_type != '-' else '-'
+                
+                # Determine if it's a CA certificate
+                is_ca = cert.get('is_ca', False)
+                ca_display = 'Yes' if is_ca else 'No'
+                
+                # Determine certificate usage
+                usage_flags = []
+                if cert.get('is_ssl_server_cert', False):
+                    usage_flags.append('SSL Server')
+                if cert.get('is_ssl_client_cert', False):
+                    usage_flags.append('SSL Client')
+                if cert.get('is_proxy_ssl_cert', False):
+                    usage_flags.append('Proxy SSL')
+                if cert.get('is_deep_inspection_cert', False):
+                    usage_flags.append('Deep Inspect')
+                if cert.get('is_wifi_cert', False):
+                    usage_flags.append('WiFi')
+                
+                usage_display = ', '.join(usage_flags) if usage_flags else '-'
+                if max_width and len(usage_display) > 15:
+                    usage_display = usage_display[:12] + "..."
+                
+                rows.append([name, type_display, source, status_display, key_display, key_size if key_size > 0 else '-', ca_display, usage_display])
+        
+        if rows:
+            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+            tables.append(table)
+        
+        # Create validity table (only for certificates with validity information)
+        valid_certs = [c for c in results if isinstance(c, dict) and c.get('valid_from') and c.get('valid_to')]
+        
+        if valid_certs:
+            tables.append(f"\nCertificate Validity Details:")
+            headers = ['Name', 'Status', 'Valid From', 'Valid To', 'Days Remaining', 'Signature Algorithm']
+            rows = []
+            
+            import datetime
+            current_time = datetime.datetime.now().timestamp()
+            
+            for cert in valid_certs:
+                name = cert.get('name', '-')
+                if max_width and len(name) > 20:
+                    name = name[:17] + "..."
+                
+                status = cert.get('status', '-').upper()
+                
+                # Format dates
+                valid_from = cert.get('valid_from', 0)
+                valid_to = cert.get('valid_to', 0)
+                
+                if valid_from > 0:
+                    from_date = datetime.datetime.fromtimestamp(valid_from)
+                    from_display = from_date.strftime('%Y-%m-%d')
+                else:
+                    from_display = '-'
+                
+                if valid_to > 0:
+                    to_date = datetime.datetime.fromtimestamp(valid_to)
+                    to_display = to_date.strftime('%Y-%m-%d')
+                    
+                    # Calculate days remaining
+                    days_remaining = int((valid_to - current_time) / 86400)
+                    if days_remaining > 0:
+                        days_display = f"{days_remaining} days"
+                    elif days_remaining == 0:
+                        days_display = "Today"
+                    else:
+                        days_display = f"Expired {abs(days_remaining)} days ago"
+                else:
+                    to_display = '-'
+                    days_display = '-'
+                
+                # Get signature algorithm
+                sig_alg = cert.get('signature_algorithm', '-')
+                
+                rows.append([name, status, from_display, to_display, days_display, sig_alg])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        # Create subject/issuer table (only for certificates with subject information)
+        subject_certs = [c for c in results if isinstance(c, dict) and c.get('subject')]
+        
+        if subject_certs:
+            tables.append(f"\nCertificate Subject & Issuer Information:")
+            headers = ['Name', 'Subject CN', 'Subject Organization', 'Issuer CN', 'Serial Number']
+            rows = []
+            
+            for cert in subject_certs:
+                name = cert.get('name', '-')
+                if max_width and len(name) > 20:
+                    name = name[:17] + "..."
+                
+                # Get subject information
+                subject = cert.get('subject', {})
+                subject_cn = subject.get('CN', '-') if isinstance(subject, dict) else '-'
+                subject_org = subject.get('O', '-') if isinstance(subject, dict) else '-'
+                
+                # Truncate long subject fields
+                if max_width:
+                    if len(subject_cn) > 25:
+                        subject_cn = subject_cn[:22] + "..."
+                    if len(subject_org) > 20:
+                        subject_org = subject_org[:17] + "..."
+                
+                # Get issuer information
+                issuer = cert.get('issuer', {})
+                issuer_cn = issuer.get('CN', '-') if isinstance(issuer, dict) else '-'
+                
+                # Truncate long issuer CN
+                if max_width and len(issuer_cn) > 25:
+                    issuer_cn = issuer_cn[:22] + "..."
+                
+                # Get serial number
+                serial = cert.get('serial_number', '-')
+                if max_width and len(serial) > 20:
+                    serial = serial[:17] + "..."
+                
+                rows.append([name, subject_cn, subject_org, issuer_cn, serial])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        # Create fingerprint and extensions table (for certificates with fingerprints)
+        fingerprint_certs = [c for c in results if isinstance(c, dict) and c.get('fingerprint')]
+        
+        if fingerprint_certs:
+            tables.append(f"\nCertificate Fingerprints & Extensions:")
+            headers = ['Name', 'Fingerprint (SHA256)', 'Version', 'Extensions', 'Has Private Key']
+            rows = []
+            
+            for cert in fingerprint_certs:
+                name = cert.get('name', '-')
+                if max_width and len(name) > 20:
+                    name = name[:17] + "..."
+                
+                # Get fingerprint
+                fingerprint = cert.get('fingerprint', '-')
+                if max_width and len(fingerprint) > 35:
+                    fingerprint = fingerprint[:32] + "..."
+                
+                # Get version
+                version = cert.get('version', '-')
+                version_display = f"v{version}" if isinstance(version, int) else str(version)
+                
+                # Get extensions count
+                extensions = cert.get('ext', [])
+                ext_count = len(extensions) if isinstance(extensions, list) else 0
+                ext_display = f"{ext_count} extensions" if ext_count > 0 else 'None'
+                
+                # Check if private key is available
+                has_key = cert.get('has_valid_cert_key', False)
+                key_display = 'Yes' if has_key else 'No'
+                
+                rows.append([name, fingerprint, version_display, ext_display, key_display])
+            
+            if rows:
+                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+                tables.append(table)
+        
+        return "\n".join(tables)
     
 
 class FortiGateAPIClient:
@@ -1037,6 +1807,8 @@ Configuration file format (JSON):
                             help='Comma-separated list of fields to include in table output')
     table_group.add_argument('--table-max-width', type=int, default=50, metavar='WIDTH',
                             help='Maximum width for table cell content (default: 50)')
+    table_group.add_argument('--table-max-fields', type=int, default=6, metavar='NUM',
+                            help='Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)')
     
     args = parser.parse_args()
     
@@ -1053,7 +1825,6 @@ Configuration file format (JSON):
     if args.ssl_warnings:
         warnings.resetwarnings()
         # Re-enable urllib3 warnings
-        import urllib3
         urllib3.warnings.simplefilter('default', urllib3.exceptions.InsecureRequestWarning)
     
     # Determine connection parameters (command line overrides config file)
@@ -1115,7 +1886,8 @@ Configuration file format (JSON):
                     response, 
                     endpoint=args.endpoint,
                     custom_fields=custom_fields,
-                    max_width=args.table_max_width
+                    max_width=args.table_max_width,
+                    max_fields=args.table_max_fields
                 )
                 print(table_output)
             except Exception as e:
