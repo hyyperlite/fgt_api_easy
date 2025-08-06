@@ -1,0 +1,1947 @@
+{
+  "examples": [
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_subnet"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T16:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_subnet"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T17:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_subnet"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T18:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 2,
+        "name": "Allow_Email_Servers",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "dmz"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "mail_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "SMTP"
+          },
+          {
+            "name": "IMAP"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "nat": "enable"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T19:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status nat srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status nat_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 2,
+        "name": "Allow_Email_Servers",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "dmz"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "mail_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "SMTP"
+          },
+          {
+            "name": "IMAP"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "nat": "enable"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T20:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status nat srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status nat_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 2,
+        "name": "Allow_Email_Servers",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "dmz"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "mail_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "SMTP"
+          },
+          {
+            "name": "IMAP"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "nat": "enable"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T21:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status nat srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status nat_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 3,
+        "name": "Allow_VPN_Access",
+        "srcintf": [
+          {
+            "name": "ssl.root"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "SSLVPN_TUNNEL_ADDR1"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "internal_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "groups": [
+          {
+            "name": "VPN_Users"
+          }
+        ]
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T22:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status groups srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status groups_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 3,
+        "name": "Allow_VPN_Access",
+        "srcintf": [
+          {
+            "name": "ssl.root"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "SSLVPN_TUNNEL_ADDR1"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "internal_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "groups": [
+          {
+            "name": "VPN_Users"
+          }
+        ]
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-07T23:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status groups srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status groups_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 3,
+        "name": "Allow_VPN_Access",
+        "srcintf": [
+          {
+            "name": "ssl.root"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "SSLVPN_TUNNEL_ADDR1"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "internal_servers"
+          }
+        ],
+        "service": [
+          {
+            "name": "ALL"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "groups": [
+          {
+            "name": "VPN_Users"
+          }
+        ]
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T00:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status groups srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status groups_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 10,
+        "name": "Block_Social_Media",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "restricted_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "social_media_sites"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T01:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 10,
+        "name": "Block_Social_Media",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "restricted_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "social_media_sites"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T02:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 10,
+        "name": "Block_Social_Media",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "restricted_users"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "social_media_sites"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "logtraffic": "all"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T03:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status logtraffic name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 11,
+        "name": "Block_P2P_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "P2P_Services"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "schedule": "business_hours"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T04:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status schedule name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 11,
+        "name": "Block_P2P_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "P2P_Services"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "schedule": "business_hours"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T05:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status schedule name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 11,
+        "name": "Block_P2P_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "P2P_Services"
+          }
+        ],
+        "action": "deny",
+        "status": "enable",
+        "schedule": "business_hours"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T06:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status schedule name_action srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 20,
+        "name": "Web_Security_Policy",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "utm-status": "enable",
+        "av-profile": "default",
+        "ips-sensor": "high_security",
+        "application-list": "block_high_risk",
+        "webfilter-profile": "strict"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T07:28:31.297325",
+      "features": "firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status utm-status av-profile ips-sensor application-list webfilter-profile srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status utm-status_status application-list_action",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 20,
+        "name": "Web_Security_Policy",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "utm-status": "enable",
+        "av-profile": "default",
+        "ips-sensor": "high_security",
+        "application-list": "block_high_risk",
+        "webfilter-profile": "strict"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T08:28:31.297325",
+      "features": "firewall policy6 policyid name srcintf dstintf srcaddr dstaddr service action status utm-status av-profile ips-sensor application-list webfilter-profile srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status utm-status_status application-list_action",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/local-in-policy",
+      "data": {
+        "policyid": 20,
+        "name": "Web_Security_Policy",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable",
+        "utm-status": "enable",
+        "av-profile": "default",
+        "ips-sensor": "high_security",
+        "application-list": "block_high_risk",
+        "webfilter-profile": "strict"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-07-08T09:28:31.297325",
+      "features": "firewall local-in-policy policyid name srcintf dstintf srcaddr dstaddr service action status utm-status av-profile ips-sensor application-list webfilter-profile srcintf_list dstintf_list srcaddr_list dstaddr_list service_list action_action status_status utm-status_status application-list_action",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "internal_subnet",
+        "type": "ipmask",
+        "subnet": "192.168.1.0/24",
+        "comment": "Internal LAN"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T10:28:31.297325",
+      "features": "firewall address name type subnet comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "dmz_subnet",
+        "type": "ipmask",
+        "subnet": "10.0.1.0/24",
+        "comment": "DMZ network"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T11:28:31.297325",
+      "features": "firewall address name type subnet comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "web_server",
+        "type": "ipmask",
+        "subnet": "10.0.1.100/32",
+        "comment": "Web server"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T12:28:31.297325",
+      "features": "firewall address name type subnet comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "mail_server",
+        "type": "ipmask",
+        "subnet": "10.0.1.200/32",
+        "comment": "Mail server"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T13:28:31.297325",
+      "features": "firewall address name type subnet comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "remote_office",
+        "type": "ipmask",
+        "subnet": "172.16.0.0/16",
+        "comment": "Remote office network"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T14:28:31.297325",
+      "features": "firewall address name type subnet comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "dynamic_range",
+        "type": "iprange",
+        "start-ip": "192.168.100.1",
+        "end-ip": "192.168.100.100"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T15:28:31.297325",
+      "features": "firewall address name type start-ip end-ip",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "google_dns",
+        "type": "fqdn",
+        "fqdn": "dns.google.com",
+        "comment": "Google DNS"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T16:28:31.297325",
+      "features": "firewall address name type fqdn comment",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "Custom_HTTP_8080",
+        "category": "Web Access",
+        "protocol": "TCP",
+        "tcp-portrange": "8080"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T17:28:31.297325",
+      "features": "firewall service custom name category protocol tcp-portrange",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "Custom_App_9000",
+        "category": "General",
+        "protocol": "TCP",
+        "tcp-portrange": "9000-9010"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T18:28:31.297325",
+      "features": "firewall service custom name category protocol tcp-portrange",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "SNMP_Custom",
+        "category": "Network Services",
+        "protocol": "UDP",
+        "udp-portrange": "161"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T19:28:31.297325",
+      "features": "firewall service custom name category protocol udp-portrange",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "Database_Services",
+        "category": "Database",
+        "protocol": "TCP",
+        "tcp-portrange": "3306,5432,1433"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T20:28:31.297325",
+      "features": "firewall service custom name category protocol tcp-portrange",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/addrgrp",
+      "data": {
+        "name": "Internal_Networks",
+        "member": [
+          {
+            "name": "internal_subnet"
+          },
+          {
+            "name": "dmz_subnet"
+          }
+        ]
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T21:28:31.297325",
+      "features": "firewall addrgrp name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/addrgrp",
+      "data": {
+        "name": "Servers",
+        "member": [
+          {
+            "name": "web_server"
+          },
+          {
+            "name": "mail_server"
+          }
+        ]
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T22:28:31.297325",
+      "features": "firewall addrgrp name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/addrgrp",
+      "data": {
+        "name": "Remote_Sites",
+        "member": [
+          {
+            "name": "remote_office"
+          }
+        ]
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-08T23:28:31.297325",
+      "features": "firewall addrgrp name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/group",
+      "data": {
+        "name": "Web_Services",
+        "member": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          },
+          {
+            "name": "Custom_HTTP_8080"
+          }
+        ]
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-09T00:28:31.297325",
+      "features": "firewall service group name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/group",
+      "data": {
+        "name": "Database_Access",
+        "member": [
+          {
+            "name": "Database_Services"
+          }
+        ]
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-07-09T01:28:31.297325",
+      "features": "firewall service group name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "seq-num": 1,
+        "dst": "0.0.0.0/0",
+        "gateway": "192.168.1.1",
+        "device": "port1",
+        "distance": 10
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T02:28:31.297325",
+      "features": "router static seq-num dst gateway device distance",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "seq-num": 2,
+        "dst": "10.0.0.0/8",
+        "gateway": "192.168.1.254",
+        "device": "port2",
+        "distance": 20
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T03:28:31.297325",
+      "features": "router static seq-num dst gateway device distance",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "seq-num": 3,
+        "dst": "172.16.0.0/12",
+        "gateway": "10.0.1.1",
+        "device": "tunnel1",
+        "distance": 1
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T04:28:31.297325",
+      "features": "router static seq-num dst gateway device distance",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "seq-num": 4,
+        "dst": "8.8.8.8/32",
+        "gateway": "192.168.1.1",
+        "device": "port1",
+        "distance": 5
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T05:28:31.297325",
+      "features": "router static seq-num dst gateway device distance",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/policy",
+      "data": {
+        "seq-num": 1,
+        "input-device": "port2",
+        "src": "192.168.2.0/24",
+        "dst": "0.0.0.0/0",
+        "gateway": "10.0.1.1"
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T06:28:31.297325",
+      "features": "router policy seq-num input-device src dst gateway",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/policy",
+      "data": {
+        "seq-num": 2,
+        "input-device": "port3",
+        "protocol": 6,
+        "start-port": 80,
+        "end-port": 80,
+        "gateway": "10.0.2.1"
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T07:28:31.297325",
+      "features": "router policy seq-num input-device protocol start-port end-port gateway",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/bgp",
+      "data": {
+        "as": 65001,
+        "router-id": "10.0.0.1",
+        "neighbor": [
+          {
+            "ip": "10.0.1.2",
+            "remote-as": 65002
+          }
+        ]
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T08:28:31.297325",
+      "features": "router bgp as router-id neighbor neighbor_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/router/bgp",
+      "data": {
+        "as": 65001,
+        "network": [
+          {
+            "prefix": "192.168.1.0",
+            "netmask": "255.255.255.0"
+          }
+        ]
+      },
+      "category": "routing",
+      "timestamp": "2025-07-09T09:28:31.297325",
+      "features": "router bgp as network network_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "port1",
+        "ip": "192.168.1.1/24",
+        "allowaccess": [
+          "ping",
+          "https",
+          "ssh"
+        ],
+        "type": "physical",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T10:28:31.297325",
+      "features": "system interface name ip allowaccess type status allowaccess_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "port2",
+        "ip": "10.0.1.1/24",
+        "allowaccess": [
+          "ping"
+        ],
+        "type": "physical",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T11:28:31.297325",
+      "features": "system interface name ip allowaccess type status allowaccess_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "port3",
+        "mode": "switch",
+        "type": "physical",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T12:28:31.297325",
+      "features": "system interface name mode type status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "tunnel1",
+        "ip": "169.254.1.1/30",
+        "type": "tunnel",
+        "interface": "port1",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T13:28:31.297325",
+      "features": "system interface name ip type interface status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "ssl.root",
+        "ip": "10.212.134.1/24",
+        "type": "tunnel",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T14:28:31.297325",
+      "features": "system interface name ip type status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/global",
+      "data": {
+        "hostname": "FortiGate-Branch-01",
+        "timezone": "04"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T15:28:31.297325",
+      "features": "system global hostname timezone",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/global",
+      "data": {
+        "admin-sport": 8443,
+        "admin-ssh-port": 2222
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T16:28:31.297325",
+      "features": "system global admin-sport admin-ssh-port",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/global",
+      "data": {
+        "gui-theme": "blue",
+        "gui-date-format": "yyyy/mm/dd"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T17:28:31.297325",
+      "features": "system global gui-theme gui-date-format",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/admin",
+      "data": {
+        "name": "admin",
+        "trusthost1": "192.168.1.0/24",
+        "accprofile": "super_admin"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T18:28:31.297325",
+      "features": "system admin name trusthost1 accprofile",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/admin",
+      "data": {
+        "name": "operator",
+        "trusthost1": "192.168.1.0/24",
+        "accprofile": "prof_admin"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T19:28:31.297325",
+      "features": "system admin name trusthost1 accprofile",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/system/admin",
+      "data": {
+        "name": "readonly",
+        "trusthost1": "0.0.0.0/0",
+        "accprofile": "readonly"
+      },
+      "category": "system",
+      "timestamp": "2025-07-09T20:28:31.297325",
+      "features": "system admin name trusthost1 accprofile",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/status",
+      "data": {
+        "hostname": "FortiGate-100D",
+        "model": "FortiGate-100D",
+        "serial": "FGT60E1234567890",
+        "version": "v7.0.0",
+        "build": "0366",
+        "uptime": 1234567,
+        "cpu": 15,
+        "memory": 35
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-09T21:28:31.297325",
+      "features": "system status hostname model serial version build uptime cpu memory",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/status",
+      "data": {
+        "interface-stats": [
+          {
+            "name": "port1",
+            "rx_bytes": 123456789,
+            "tx_bytes": 987654321,
+            "rx_packets": 45678,
+            "tx_packets": 56789
+          }
+        ]
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-09T22:28:31.297325",
+      "features": "system status interface-stats interface-stats_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/vpn/ipsec/phase1-interface",
+      "data": {
+        "name": "VPN_HQ",
+        "interface": "port1",
+        "ike-version": 2,
+        "type": "static",
+        "remote-gw": "203.0.113.10",
+        "proposal": "aes256-sha256",
+        "dhgrp": "14",
+        "keylife": 28800,
+        "local-gw": "0.0.0.0",
+        "psksecret": "encrypted"
+      },
+      "category": "vpn",
+      "timestamp": "2025-07-09T23:28:31.297325",
+      "features": "vpn ipsec phase1-interface name interface ike-version type remote-gw proposal dhgrp keylife local-gw psksecret",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/vpn/ipsec/phase1-interface",
+      "data": {
+        "name": "VPN_Branch_02",
+        "interface": "port1",
+        "ike-version": 1,
+        "type": "static",
+        "remote-gw": "198.51.100.20",
+        "proposal": "aes128-sha1",
+        "dhgrp": "2",
+        "keylife": 86400,
+        "nattraversal": "enable"
+      },
+      "category": "vpn",
+      "timestamp": "2025-07-10T00:28:31.297325",
+      "features": "vpn ipsec phase1-interface name interface ike-version type remote-gw proposal dhgrp keylife nattraversal nattraversal_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/vpn/ipsec/phase2-interface",
+      "data": {
+        "name": "VPN_HQ_P2",
+        "phase1name": "VPN_HQ",
+        "proposal": "aes256-sha256",
+        "dhgrp": "14",
+        "keylifeseconds": 3600,
+        "src-subnet": "192.168.1.0/24",
+        "dst-subnet": "10.0.0.0/8"
+      },
+      "category": "vpn",
+      "timestamp": "2025-07-10T01:28:31.297325",
+      "features": "vpn ipsec phase2-interface name phase1name proposal dhgrp keylifeseconds src-subnet dst-subnet",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/vpn/ssl/settings",
+      "data": {
+        "status": "enable",
+        "port": 443,
+        "source-interface": [
+          "port1"
+        ],
+        "source-address": [
+          "all"
+        ],
+        "tunnel-ip-pools": [
+          "SSLVPN_TUNNEL_ADDR1"
+        ],
+        "tunnel-ipv6-pools": [],
+        "dns-server1": "8.8.8.8",
+        "dns-server2": "8.8.4.4"
+      },
+      "category": "vpn",
+      "timestamp": "2025-07-10T02:28:31.297325",
+      "features": "vpn ssl settings status port source-interface source-address tunnel-ip-pools tunnel-ipv6-pools dns-server1 dns-server2 status_status source-interface_list source-address_list tunnel-ip-pools_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/vpn/ipsec",
+      "data": {
+        "name": "VPN_HQ",
+        "status": "up",
+        "rgwy": "203.0.113.10",
+        "incoming_bytes": 10485760,
+        "outgoing_bytes": 20971520,
+        "uptime": 86400
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T03:28:31.297325",
+      "features": "vpn ipsec name status rgwy incoming_bytes outgoing_bytes uptime",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/local",
+      "data": {
+        "name": "john.doe",
+        "status": "enable",
+        "type": "password",
+        "email-to": "john.doe@company.com"
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T04:28:31.297325",
+      "features": "user local name status type email-to status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/local",
+      "data": {
+        "name": "jane.smith",
+        "status": "enable",
+        "type": "password",
+        "two-factor": "fortitoken"
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T05:28:31.297325",
+      "features": "user local name status type two-factor status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/local",
+      "data": {
+        "name": "guest_user",
+        "status": "enable",
+        "type": "password",
+        "workstation": "192.168.1.100"
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T06:28:31.297325",
+      "features": "user local name status type workstation status_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/group",
+      "data": {
+        "name": "VPN_Users",
+        "member": [
+          {
+            "name": "john.doe"
+          },
+          {
+            "name": "jane.smith"
+          }
+        ]
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T07:28:31.297325",
+      "features": "user group name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/group",
+      "data": {
+        "name": "Guest_Users",
+        "member": [
+          {
+            "name": "guest_user"
+          }
+        ]
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T08:28:31.297325",
+      "features": "user group name member member_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/ldap",
+      "data": {
+        "name": "Company_AD",
+        "server": "192.168.1.10",
+        "cnid": "cn",
+        "dn": "dc=company,dc=com",
+        "type": "simple",
+        "port": 389
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T09:28:31.297325",
+      "features": "user ldap name server cnid dn type port",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/user/radius",
+      "data": {
+        "name": "NPS_Server",
+        "server": "192.168.1.20",
+        "secret": "encrypted",
+        "auth-type": "auto",
+        "nas-ip": "192.168.1.1"
+      },
+      "category": "user_auth",
+      "timestamp": "2025-07-10T10:28:31.297325",
+      "features": "user radius name server secret auth-type nas-ip",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/antivirus/profile",
+      "data": {
+        "name": "strict_av",
+        "scan-mode": "full",
+        "outbreak-prevention": "enable",
+        "http": {
+          "options": "scan"
+        },
+        "ftp": {
+          "options": "scan"
+        },
+        "smtp": {
+          "options": "scan"
+        }
+      },
+      "category": "security_profiles",
+      "timestamp": "2025-07-10T11:28:31.297325",
+      "features": "antivirus profile name scan-mode outbreak-prevention http ftp smtp outbreak-prevention_status",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/antivirus/profile",
+      "data": {
+        "name": "basic_av",
+        "scan-mode": "quick",
+        "http": {
+          "options": "scan"
+        }
+      },
+      "category": "security_profiles",
+      "timestamp": "2025-07-10T12:28:31.297325",
+      "features": "antivirus profile name scan-mode http",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/ips/sensor",
+      "data": {
+        "name": "high_security",
+        "block-malicious-url": "enable",
+        "entries": [
+          {
+            "id": 1,
+            "rule": [
+              {
+                "id": 15227
+              }
+            ],
+            "action": "block",
+            "severity": "high"
+          },
+          {
+            "id": 2,
+            "rule": [
+              {
+                "id": 32315
+              }
+            ],
+            "action": "block",
+            "severity": "critical"
+          }
+        ]
+      },
+      "category": "security_profiles",
+      "timestamp": "2025-07-10T13:28:31.297325",
+      "features": "ips sensor name block-malicious-url entries block-malicious-url_status entries_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/application/list",
+      "data": {
+        "name": "block_high_risk",
+        "default-network-services": "enable",
+        "entries": [
+          {
+            "id": 1,
+            "category": [
+              {
+                "id": 2
+              }
+            ],
+            "action": "block"
+          },
+          {
+            "id": 2,
+            "category": [
+              {
+                "id": 6
+              }
+            ],
+            "action": "block"
+          }
+        ]
+      },
+      "category": "security_profiles",
+      "timestamp": "2025-07-10T14:28:31.297325",
+      "features": "application list name default-network-services entries name_action default-network-services_status entries_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/cmdb/webfilter/profile",
+      "data": {
+        "name": "strict",
+        "https-replacemsg": "enable",
+        "ovrd": "allow",
+        "filters": [
+          {
+            "id": 1,
+            "category": 26,
+            "action": "block"
+          },
+          {
+            "id": 2,
+            "category": 61,
+            "action": "warning"
+          }
+        ]
+      },
+      "category": "security_profiles",
+      "timestamp": "2025-07-10T15:28:31.297325",
+      "features": "webfilter profile name https-replacemsg ovrd filters https-replacemsg_status filters_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/performance",
+      "data": {
+        "cpu": 80,
+        "memory": 40,
+        "disk": 7,
+        "sessions": 1308,
+        "timestamp": "2025-08-06T16:28:31.297243"
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T16:28:31.297325",
+      "features": "system performance cpu memory disk sessions timestamp",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/performance",
+      "data": {
+        "cpu": 24,
+        "memory": 43,
+        "disk": 50,
+        "sessions": 2230,
+        "timestamp": "2025-08-06T16:28:31.297246"
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T17:28:31.297325",
+      "features": "system performance cpu memory disk sessions timestamp",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/performance",
+      "data": {
+        "cpu": 69,
+        "memory": 32,
+        "disk": 44,
+        "sessions": 1668,
+        "timestamp": "2025-08-06T16:28:31.297249"
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T18:28:31.297325",
+      "features": "system performance cpu memory disk sessions timestamp",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/performance",
+      "data": {
+        "cpu": 51,
+        "memory": 53,
+        "disk": 20,
+        "sessions": 3611,
+        "timestamp": "2025-08-06T16:28:31.297251"
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T19:28:31.297325",
+      "features": "system performance cpu memory disk sessions timestamp",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/performance",
+      "data": {
+        "cpu": 39,
+        "memory": 38,
+        "disk": 29,
+        "sessions": 3567,
+        "timestamp": "2025-08-06T16:28:31.297253"
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T20:28:31.297325",
+      "features": "system performance cpu memory disk sessions timestamp",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/firewall/session",
+      "data": {
+        "sessions": [
+          {
+            "sessionid": 0,
+            "src": "192.168.1.184",
+            "dst": "8.8.6.8",
+            "proto": 6,
+            "sport": 20822,
+            "dport": 443,
+            "duration": 243,
+            "bytes": 537428
+          },
+          {
+            "sessionid": 1,
+            "src": "192.168.1.65",
+            "dst": "8.8.6.8",
+            "proto": 6,
+            "sport": 13803,
+            "dport": 80,
+            "duration": 2229,
+            "bytes": 688435
+          },
+          {
+            "sessionid": 2,
+            "src": "192.168.1.210",
+            "dst": "8.8.2.8",
+            "proto": 6,
+            "sport": 21466,
+            "dport": 80,
+            "duration": 80,
+            "bytes": 562365
+          },
+          {
+            "sessionid": 3,
+            "src": "192.168.1.178",
+            "dst": "8.8.7.4",
+            "proto": 6,
+            "sport": 27206,
+            "dport": 443,
+            "duration": 2095,
+            "bytes": 411667
+          },
+          {
+            "sessionid": 4,
+            "src": "192.168.1.20",
+            "dst": "8.8.6.4",
+            "proto": 6,
+            "sport": 14043,
+            "dport": 80,
+            "duration": 2782,
+            "bytes": 302819
+          },
+          {
+            "sessionid": 5,
+            "src": "192.168.1.191",
+            "dst": "8.8.8.3",
+            "proto": 6,
+            "sport": 3404,
+            "dport": 443,
+            "duration": 605,
+            "bytes": 1036526
+          },
+          {
+            "sessionid": 6,
+            "src": "192.168.1.110",
+            "dst": "8.8.4.3",
+            "proto": 6,
+            "sport": 22873,
+            "dport": 53,
+            "duration": 1666,
+            "bytes": 494454
+          },
+          {
+            "sessionid": 7,
+            "src": "192.168.1.52",
+            "dst": "8.8.4.1",
+            "proto": 6,
+            "sport": 64829,
+            "dport": 53,
+            "duration": 713,
+            "bytes": 170299
+          },
+          {
+            "sessionid": 8,
+            "src": "192.168.1.89",
+            "dst": "8.8.5.7",
+            "proto": 6,
+            "sport": 59604,
+            "dport": 80,
+            "duration": 3308,
+            "bytes": 695758
+          },
+          {
+            "sessionid": 9,
+            "src": "192.168.1.49",
+            "dst": "8.8.5.2",
+            "proto": 6,
+            "sport": 24067,
+            "dport": 443,
+            "duration": 618,
+            "bytes": 1829
+          }
+        ]
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T21:28:31.297325",
+      "features": "firewall session sessions sessions_list",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/interface",
+      "data": {
+        "name": "port1",
+        "rx_bytes": 28662393,
+        "tx_bytes": 9755614,
+        "rx_packets": 59238,
+        "tx_packets": 91374,
+        "rx_errors": 84,
+        "tx_errors": 88
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T22:28:31.297325",
+      "features": "system interface name rx_bytes tx_bytes rx_packets tx_packets rx_errors tx_errors",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/interface",
+      "data": {
+        "name": "port1",
+        "rx_bytes": 39840896,
+        "tx_bytes": 72399712,
+        "rx_packets": 92733,
+        "tx_packets": 45131,
+        "rx_errors": 28,
+        "tx_errors": 67
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-10T23:28:31.297325",
+      "features": "system interface name rx_bytes tx_bytes rx_packets tx_packets rx_errors tx_errors",
+      "synthetic": true,
+      "enhanced": true
+    },
+    {
+      "endpoint": "/monitor/system/interface",
+      "data": {
+        "name": "port1",
+        "rx_bytes": 81094061,
+        "tx_bytes": 50080807,
+        "rx_packets": 44519,
+        "tx_packets": 70493,
+        "rx_errors": 31,
+        "tx_errors": 51
+      },
+      "category": "monitor",
+      "timestamp": "2025-07-11T00:28:31.297325",
+      "features": "system interface name rx_bytes tx_bytes rx_packets tx_packets rx_errors tx_errors",
+      "synthetic": true,
+      "enhanced": true
+    }
+  ],
+  "categories": [
+    "firewall_policy",
+    "firewall_objects",
+    "routing",
+    "system",
+    "vpn",
+    "monitor",
+    "user_auth",
+    "security_profiles",
+    "wireless",
+    "switching",
+    "log_analytics"
+  ],
+  "category_descriptions": {
+    "firewall_policy": "Firewall policy configuration and rules",
+    "firewall_objects": "Firewall objects like addresses, services, groups",
+    "routing": "Routing tables, static routes, BGP, OSPF",
+    "system": "System configuration, interfaces, global settings",
+    "vpn": "VPN configuration, IPSec, SSL VPN",
+    "monitor": "Monitoring data, logs, status information",
+    "user_auth": "User authentication, LDAP, local users",
+    "security_profiles": "AV, IPS, DLP, Application Control profiles",
+    "wireless": "WiFi configuration, access points, SSIDs",
+    "switching": "Switch configuration, VLANs, ports",
+    "log_analytics": "Log analysis, traffic reports, security events"
+  },
+  "total_examples": 81,
+  "enhanced_dataset": true,
+  "generation_date": "2025-08-06T16:28:31.297411",
+  "generator_version": "2.0"
+}

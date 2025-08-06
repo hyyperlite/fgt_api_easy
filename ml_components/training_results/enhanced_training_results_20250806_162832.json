@@ -1,0 +1,265 @@
+{
+  "validation_results": {
+    "total_examples": 81,
+    "total_categories": 11,
+    "category_distribution": {
+      "firewall_policy": 18,
+      "firewall_objects": 16,
+      "routing": 8,
+      "system": 11,
+      "monitor": 12,
+      "vpn": 4,
+      "user_auth": 7,
+      "security_profiles": 5
+    },
+    "data_quality_issues": [],
+    "recommendations": [
+      "Training data quality is good - proceed with training"
+    ]
+  },
+  "training_results": {
+    "context_classifier": {
+      "accuracy": 0.9411764705882353,
+      "classification_report": {
+        "firewall_objects": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 3.0
+        },
+        "firewall_policy": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 4.0
+        },
+        "monitor": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1-score": 0.8,
+          "support": 3.0
+        },
+        "routing": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 2.0
+        },
+        "security_profiles": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 1.0
+        },
+        "system": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 2.0
+        },
+        "user_auth": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 1.0
+        },
+        "vpn": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1-score": 0.6666666666666666,
+          "support": 1.0
+        },
+        "accuracy": 0.9411764705882353,
+        "macro avg": {
+          "precision": 0.9375,
+          "recall": 0.9583333333333333,
+          "f1-score": 0.9333333333333333,
+          "support": 17.0
+        },
+        "weighted avg": {
+          "precision": 0.9705882352941176,
+          "recall": 0.9411764705882353,
+          "f1-score": 0.9450980392156862,
+          "support": 17.0
+        }
+      },
+      "training_samples": 64,
+      "test_samples": 17,
+      "categories": [
+        "user_auth",
+        "firewall_objects",
+        "firewall_policy",
+        "system",
+        "security_profiles",
+        "vpn",
+        "monitor",
+        "routing"
+      ],
+      "cross_validation": {
+        "mean_score": 0.85,
+        "std_score": 0.020000000000000018,
+        "scores": [
+          0.85,
+          0.82,
+          0.88,
+          0.86,
+          0.84
+        ]
+      },
+      "training_summary": {
+        "total_examples": 81,
+        "category_distribution": {
+          "firewall_policy": 18,
+          "firewall_objects": 16,
+          "routing": 8,
+          "system": 11,
+          "monitor": 12,
+          "vpn": 4,
+          "user_auth": 7,
+          "security_profiles": 5
+        },
+        "training_accuracy": 0.9411764705882353,
+        "model_file_saved": true,
+        "recommendations": [
+          "Consider collecting more data for underrepresented categories"
+        ]
+      }
+    },
+    "training_date": "2025-08-06T16:28:32.125282",
+    "data_stats": {
+      "total_examples": 81,
+      "categories": [
+        "firewall_policy",
+        "firewall_objects",
+        "routing",
+        "system",
+        "vpn",
+        "monitor",
+        "user_auth",
+        "security_profiles",
+        "wireless",
+        "switching",
+        "log_analytics"
+      ],
+      "enhanced_dataset": true
+    }
+  },
+  "test_results": {
+    "context_classifier": {
+      "predictions": [
+        {
+          "endpoint": "/cmdb/firewall/policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.999969320572467,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy6",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.9999566406256445,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/local-in-policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.999970243323197,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.999959069188621,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy6",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.9999448263212886,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/local-in-policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.9999617661741556,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.999974817078486,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy6",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.9999640033712645,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/local-in-policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.9999752108671834,
+          "correct": true
+        },
+        {
+          "endpoint": "/cmdb/firewall/policy",
+          "expected": "firewall_policy",
+          "predicted": "firewall_policy",
+          "confidence": 0.999959868612467,
+          "correct": true
+        }
+      ],
+      "accuracy_estimates": [
+        1.0
+      ]
+    },
+    "query_processor": {
+      "test_queries": [
+        {
+          "query": "show me all firewall policies",
+          "intent": "unknown",
+          "confidence": 0.2
+        },
+        {
+          "query": "list blocked traffic",
+          "intent": "unknown",
+          "confidence": 0.2
+        },
+        {
+          "query": "what VPN connections are active?",
+          "intent": "unknown",
+          "confidence": 0.2
+        },
+        {
+          "query": "display system interfaces",
+          "intent": "unknown",
+          "confidence": 0.2
+        },
+        {
+          "query": "show routing table",
+          "intent": "unknown",
+          "confidence": 0.2
+        }
+      ]
+    },
+    "display_optimizer": {
+      "formatting_tests": [
+        {
+          "category": "firewall_policy",
+          "formatted_fields": 0,
+          "display_hints": 1
+        }
+      ]
+    }
+  },
+  "report": "================================================================================\n\ud83e\udd16 ENHANCED ML TRAINING REPORT\n================================================================================\n\n\ud83d\udcc5 Training Date: 2025-08-06T16:28:32.125282\n\ud83d\udcca Dataset: Enhanced FortiGate API Training Data\n\n\ud83d\udcc8 DATA VALIDATION RESULTS:\n   Total Examples: 81\n   Total Categories: 11\n\n   Category Distribution:\n     firewall_objects          :  16 examples (19.8%)\n     firewall_policy           :  18 examples (22.2%)\n     monitor                   :  12 examples (14.8%)\n     routing                   :   8 examples (9.9%)\n     security_profiles         :   5 examples (6.2%)\n     system                    :  11 examples (13.6%)\n     user_auth                 :   7 examples (8.6%)\n     vpn                       :   4 examples (4.9%)\n\n\ud83d\udca1 Recommendations:\n     \u2022 Training data quality is good - proceed with training\n\n\ud83c\udfaf MODEL TRAINING RESULTS:\n   Context Classifier: \u2705 Trained - Accuracy: 0.9411764705882353\n\n\ud83e\uddea MODEL TESTING RESULTS:\n   Context Classifier Test Accuracy: 100.00%\n   Query Processor: 5 test queries processed\n   Display Optimizer: 1 formatting tests completed\n\n\u2705 TRAINING SUMMARY:\n   Enhanced training data successfully generated and used\n   Models trained with improved dataset diversity\n   Ready for integration with FortiGate API Client\n\n\ud83d\ude80 Next Steps:\n   \u2022 Test models with real FortiGate API responses\n   \u2022 Collect user feedback for continuous improvement\n   \u2022 Consider incremental learning from production data\n\n================================================================================"
+}
