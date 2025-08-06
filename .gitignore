@@ -210,6 +210,8 @@ data/*
 *.temp
 *.bak
 *.backup
+tmp/
+tmp/*
 
 # Test output
 test_output/
