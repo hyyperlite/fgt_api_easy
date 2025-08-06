@@ -34,6 +34,14 @@ except ImportError:
     print("Error: tabulate package not found. Please install it using: pip install tabulate")
     sys.exit(1)
 
+# ML/AI components - optional import
+ML_AVAILABLE = False
+try:
+    from ml_components import EndpointContextClassifier, IntelligentDisplayEngine, QueryProcessor, MLModelTrainer
+    ML_AVAILABLE = True
+except ImportError:
+    pass  # ML components are optional
+
 
 class TableFormatter:
     """Handles formatting of FortiGate API responses as tables"""
@@ -1555,7 +1563,7 @@ class FortiGateAPIClient:
     
     def __init__(self, host: str, username: Optional[str] = None, password: Optional[str] = None, 
                  apikey: Optional[str] = None, use_ssl: bool = True, verify_ssl: bool = False,
-                 timeout: int = 300, debug: bool = False):
+                 timeout: int = 300, debug: bool = False, enable_ml: bool = False):
         """
         Initialize the FortiGate API client
         
@@ -1568,6 +1576,7 @@ class FortiGateAPIClient:
             verify_ssl: Whether to verify SSL certificates (default: False)
             timeout: Request timeout in seconds (default: 300)
             debug: Enable debug mode (default: False)
+            enable_ml: Enable ML/AI features (default: False)
         """
         self.host = host
         self.username = username or "admin"
@@ -1577,6 +1586,23 @@ class FortiGateAPIClient:
         self.verify_ssl = verify_ssl
         self.timeout = timeout
         self.debug = debug
+        self.enable_ml = enable_ml and ML_AVAILABLE
+        
+        # Initialize ML components if enabled and available
+        self.ml_classifier = None
+        self.display_engine = None
+        self.query_processor = None
+        
+        if self.enable_ml:
+            try:
+                self.ml_classifier = EndpointContextClassifier()
+                self.display_engine = IntelligentDisplayEngine(self.ml_classifier)
+                self.query_processor = QueryProcessor()
+                if self.debug:
+                    print("ML/AI components initialized successfully")
+            except Exception as e:
+                print(f"Warning: Could not initialize ML components: {e}")
+                self.enable_ml = False
         
         # Validate authentication parameters
         if not apikey and not password:
@@ -1650,7 +1676,198 @@ class FortiGateAPIClient:
         except Exception as e:
             print(f"Unexpected error: {e}")
             return -4, {"error": "Unexpected error", "details": str(e)}
-
+    
+    def execute_request_with_ai(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None,
+                              query_params: Optional[List[str]] = None, user_query: Optional[str] = None,
+                              ai_format: Optional[str] = None) -> Tuple[int, Dict[str, Any]]:
+        """
+        Execute a request with ML/AI-enhanced processing
+        
+        Args:
+            method: HTTP method (get, post, put, delete)
+            endpoint: API endpoint path
+            data: Request body data (for POST/PUT requests)
+            query_params: List of query parameters
+            user_query: Natural language query for data processing
+            ai_format: Override format for AI display
+            
+        Returns:
+            Tuple of (status_code, enhanced_response_data)
+        """
+        # Execute the regular request first
+        status_code, response_data = self.execute_request(method, endpoint, data, query_params)
+        
+        # If ML is not enabled or request failed, return as-is
+        if not self.enable_ml or status_code != 200:
+            return status_code, response_data
+        
+        # Apply AI processing to the response
+        try:
+            if user_query and self.query_processor:
+                # Process the user query
+                query_result = self.query_processor.process_query(user_query, response_data)
+                
+                # Apply intelligent display optimization
+                if self.display_engine and 'results' in response_data:
+                    display_result = self.display_engine.optimize_display(
+                        endpoint, response_data['results'], user_query, ai_format
+                    )
+                    
+                    # Enhance the response with AI insights
+                    enhanced_response = response_data.copy()
+                    enhanced_response['ai_processing'] = {
+                        'query_analysis': query_result,
+                        'display_optimization': display_result,
+                        'ml_enabled': True
+                    }
+                    return status_code, enhanced_response
+                    
+            elif self.display_engine and 'results' in response_data:
+                # Apply basic optimization without user query
+                display_result = self.display_engine.optimize_display(
+                    endpoint, response_data['results'], display_format=ai_format
+                )
+                
+                enhanced_response = response_data.copy()
+                enhanced_response['ai_processing'] = {
+                    'display_optimization': display_result,
+                    'ml_enabled': True
+                }
+                return status_code, enhanced_response
+            
+        except Exception as e:
+            if self.debug:
+                print(f"Warning: AI processing failed: {e}")
+            # Return original response if AI processing fails
+            return status_code, response_data
+        
+        return status_code, response_data
+    
+    def collect_training_data(self, endpoint: str, response_data: Dict[str, Any], 
+                            expected_category: Optional[str] = None):
+        """
+        Collect data for ML model training
+        
+        Args:
+            endpoint: API endpoint path
+            response_data: Response data from the API
+            expected_category: Expected category (if known)
+        """
+        if not self.enable_ml:
+            return
+        
+        try:
+            training_example = {
+                'endpoint': endpoint,
+                'data': response_data.get('results', response_data),
+                'timestamp': datetime.datetime.now().isoformat(),
+                'category': expected_category or 'unknown'
+            }
+            
+            # Save to training data file
+            training_data_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'training_data')
+            os.makedirs(training_data_dir, exist_ok=True)
+            
+            collected_data_file = os.path.join(training_data_dir, 'collected_data.json')
+            
+            # Load existing data or create new
+            collected_data = []
+            if os.path.exists(collected_data_file):
+                try:
+                    with open(collected_data_file, 'r') as f:
+                        collected_data = json.load(f)
+                except:
+                    collected_data = []
+            
+            # Add new example
+            collected_data.append(training_example)
+            
+            # Keep only recent data (last 1000 examples)
+            if len(collected_data) > 1000:
+                collected_data = collected_data[-1000:]
+            
+            # Save updated data
+            with open(collected_data_file, 'w') as f:
+                json.dump(collected_data, f, indent=2)
+                
+        except Exception as e:
+            if self.debug:
+                print(f"Warning: Could not collect training data: {e}")
+    
+    def train_ml_models(self) -> Dict[str, Any]:
+        """
+        Train ML models using collected data
+        
+        Returns:
+            Dict containing training results
+        """
+        if not self.enable_ml:
+            return {'error': 'ML not enabled'}
+        
+        try:
+            trainer = MLModelTrainer()
+            
+            # Load collected training data
+            training_data_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'training_data')
+            collected_data_file = os.path.join(training_data_dir, 'collected_data.json')
+            
+            if os.path.exists(collected_data_file):
+                with open(collected_data_file, 'r') as f:
+                    collected_examples = json.load(f)
+            else:
+                # Use bootstrap data if no collected data exists
+                bootstrap_file = os.path.join(training_data_dir, 'bootstrap_training_data.json')
+                if os.path.exists(bootstrap_file):
+                    with open(bootstrap_file, 'r') as f:
+                        bootstrap_data = json.load(f)
+                        collected_examples = bootstrap_data.get('examples', [])
+                else:
+                    # Generate synthetic data
+                    collected_examples = trainer.generate_synthetic_training_data({})
+            
+            # Create training data
+            training_data = trainer.create_training_data(collected_examples, save_to_file=True)
+            
+            # Train the classifier
+            results = trainer.train_context_classifier(training_data)
+            
+            # Reload classifier with new model
+            self.ml_classifier = EndpointContextClassifier()
+            self.display_engine = IntelligentDisplayEngine(self.ml_classifier)
+            
+            return results
+            
+        except Exception as e:
+            return {'error': f'Training failed: {str(e)}'}
+    
+    def get_ml_status(self) -> Dict[str, Any]:
+        """Get status of ML components"""
+        if not ML_AVAILABLE:
+            return {'ml_available': False, 'reason': 'ML dependencies not installed'}
+        
+        if not self.enable_ml:
+            return {'ml_available': True, 'ml_enabled': False}
+        
+        status = {
+            'ml_available': True,
+            'ml_enabled': True,
+            'components': {
+                'classifier': self.ml_classifier is not None,
+                'display_engine': self.display_engine is not None,
+                'query_processor': self.query_processor is not None
+            }
+        }
+        
+        # Check for trained models
+        models_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'models')
+        if os.path.exists(models_dir):
+            model_files = ['classifier.pkl', 'vectorizer.pkl', 'categories.json']
+            trained_models = [f for f in model_files if os.path.exists(os.path.join(models_dir, f))]
+            status['trained_models'] = len(trained_models)
+            status['model_files'] = trained_models
+        
+        return status
+        
 
 def load_config_file(config_path: str) -> Dict[str, str]:
     """
@@ -1776,11 +1993,11 @@ Configuration file format (JSON):
     
     # Request arguments group
     req_group = parser.add_argument_group('Request')
-    req_group.add_argument('-m', '--method', required=True,
+    req_group.add_argument('-m', '--method',
                           choices=['get', 'post', 'put', 'delete'],
-                          help='HTTP method to use')
-    req_group.add_argument('-e', '--endpoint', required=True, metavar='PATH',
-                          help='API endpoint path (e.g., /cmdb/firewall/address)')
+                          help='HTTP method to use (not required for AI-only commands)')
+    req_group.add_argument('-e', '--endpoint', metavar='PATH',
+                          help='API endpoint path (e.g., /cmdb/firewall/address) (not required for AI-only commands)')
     req_group.add_argument('-d', '--data', metavar='JSON',
                           help='Request data as JSON string (for POST/PUT)')
     req_group.add_argument('-q', '--query', metavar='PARAM', action='append',
@@ -1810,7 +2027,43 @@ Configuration file format (JSON):
     table_group.add_argument('--table-max-fields', type=int, default=6, metavar='NUM',
                             help='Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)')
     
+    # ML/AI options (only shown if ML components are available)
+    if ML_AVAILABLE:
+        ai_group = parser.add_argument_group('AI/ML Options (Experimental)')
+        ai_group.add_argument('--enable-ai', action='store_true',
+                             help='Enable AI/ML features for intelligent data processing')
+        ai_group.add_argument('--ai-query', metavar='QUERY',
+                             help='Natural language query to process results (e.g., "show only enabled policies")')
+        ai_group.add_argument('--ai-format', choices=['auto', 'table', 'summary', 'grouped'],
+                             default='auto', help='AI-suggested display format (default: auto)')
+        ai_group.add_argument('--train-models', action='store_true',
+                             help='Train ML models using collected data')
+        ai_group.add_argument('--ai-status', action='store_true',
+                             help='Show AI/ML component status')
+        ai_group.add_argument('--collect-training-data', action='store_true',
+                             help='Collect this request for ML model training')
+    else:
+        # Add a note about ML availability
+        parser.add_argument_group('AI/ML Options').add_argument(
+            '--enable-ml-note', action='store_true', 
+            help='ML/AI features unavailable. Install: pip install -r requirements.txt'
+        )
+    
     args = parser.parse_args()
+    
+    # Check if this is an AI-only command that doesn't need method/endpoint
+    ai_only_command = (ML_AVAILABLE and 
+                      (hasattr(args, 'ai_status') and args.ai_status) or
+                      (hasattr(args, 'train_models') and args.train_models))
+    
+    # Validate required arguments for regular API requests
+    if not ai_only_command:
+        if not args.method:
+            print("Error: -m/--method is required for API requests", file=sys.stderr)
+            sys.exit(1)
+        if not args.endpoint:
+            print("Error: -e/--endpoint is required for API requests", file=sys.stderr)
+            sys.exit(1)
     
     # Load configuration
     config = {}
@@ -1833,13 +2086,21 @@ Configuration file format (JSON):
     password = args.password or config.get('password')
     apikey = args.apikey or config.get('apikey')
     
-    if not host:
-        print("Error: FortiGate host/IP address is required", file=sys.stderr)
-        sys.exit(1)
-    
-    if not apikey and not password:
-        print("Error: Either API key or password is required", file=sys.stderr)
-        sys.exit(1)
+    # For AI-only commands, we may not need actual FortiGate connection
+    if not ai_only_command:
+        if not host:
+            print("Error: FortiGate host/IP address is required", file=sys.stderr)
+            sys.exit(1)
+        
+        if not apikey and not password:
+            print("Error: Either API key or password is required", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # For AI-only commands, provide dummy values if not specified
+        if not host:
+            host = "localhost"
+        if not apikey and not password:
+            apikey = "dummy"
     
     # Parse request data if provided
     request_data = None
@@ -1852,6 +2113,35 @@ Configuration file format (JSON):
     
     # Create client and execute request
     try:
+        # Check for ML/AI features
+        enable_ai = False
+        if ML_AVAILABLE and hasattr(args, 'enable_ai') and args.enable_ai:
+            enable_ai = True
+        
+        # Handle AI-specific commands first
+        if ML_AVAILABLE and hasattr(args, 'ai_status') and args.ai_status:
+            client = FortiGateAPIClient(
+                host=host, username=username, password=password, apikey=apikey,
+                use_ssl=not args.no_ssl, verify_ssl=args.verify_ssl,
+                timeout=args.timeout, debug=args.debug, enable_ml=True
+            )
+            status = client.get_ml_status()
+            print("AI/ML Status:")
+            print(json.dumps(status, indent=2))
+            sys.exit(0)
+        
+        if ML_AVAILABLE and hasattr(args, 'train_models') and args.train_models:
+            client = FortiGateAPIClient(
+                host=host, username=username, password=password, apikey=apikey,
+                use_ssl=not args.no_ssl, verify_ssl=args.verify_ssl,
+                timeout=args.timeout, debug=args.debug, enable_ml=True
+            )
+            print("Training ML models...")
+            results = client.train_ml_models()
+            print("Training Results:")
+            print(json.dumps(results, indent=2, default=str))
+            sys.exit(0)
+        
         client = FortiGateAPIClient(
             host=host,
             username=username,
@@ -1860,18 +2150,63 @@ Configuration file format (JSON):
             use_ssl=not args.no_ssl,
             verify_ssl=args.verify_ssl,
             timeout=args.timeout,
-            debug=args.debug
+            debug=args.debug,
+            enable_ml=enable_ai
         )
         
-        status_code, response = client.execute_request(
-            method=args.method,
-            endpoint=args.endpoint,
-            data=request_data,
-            query_params=args.query
-        )
+        # Execute request with or without AI processing
+        if enable_ai and hasattr(args, 'ai_query') and args.ai_query:
+            status_code, response = client.execute_request_with_ai(
+                method=args.method,
+                endpoint=args.endpoint,
+                data=request_data,
+                query_params=args.query,
+                user_query=args.ai_query,
+                ai_format=getattr(args, 'ai_format', None)
+            )
+        else:
+            status_code, response = client.execute_request(
+                method=args.method,
+                endpoint=args.endpoint,
+                data=request_data,
+                query_params=args.query
+            )
+        
+        # Collect training data if requested
+        if (ML_AVAILABLE and hasattr(args, 'collect_training_data') and 
+            args.collect_training_data and status_code == 200):
+            client.collect_training_data(args.endpoint, response)
+            if args.debug:
+                print("Training data collected for this request")
         
         # Output results
         print(f"Status Code: {status_code}")
+        
+        # Handle AI-enhanced responses
+        if enable_ai and 'ai_processing' in response:
+            ai_info = response['ai_processing']
+            if 'display_optimization' in ai_info:
+                display_opt = ai_info['display_optimization']
+                print(f"AI Context: {display_opt.get('context', 'unknown')} (confidence: {display_opt.get('confidence', 0):.2f})")
+                
+                if display_opt.get('suggestions'):
+                    print("AI Suggestions:")
+                    for suggestion in display_opt['suggestions']:
+                        print(f"  • {suggestion}")
+                
+                # Use AI-processed data for display
+                if 'processed_data' in display_opt:
+                    processed_data = display_opt['processed_data']
+                    if 'data' in processed_data:
+                        response['results'] = processed_data['data']
+                    
+                    # Show applied filters
+                    if processed_data.get('applied_filters'):
+                        print("Applied Filters:")
+                        for filter_info in processed_data['applied_filters']:
+                            print(f"  • {filter_info}")
+                    
+                    print()  # Add spacing
         
         # Handle different output formats
         if args.format == 'table':
@@ -1879,6 +2214,17 @@ Configuration file format (JSON):
             custom_fields = None
             if args.table_fields:
                 custom_fields = [field.strip() for field in args.table_fields.split(',')]
+            
+            # Use AI-suggested fields if available and no custom fields specified
+            if (not custom_fields and enable_ai and 'ai_processing' in response and
+                'display_optimization' in response['ai_processing']):
+                display_opt = response['ai_processing']['display_optimization']
+                if 'display_config' in display_opt:
+                    suggested_fields = display_opt['display_config'].get('priority_fields', [])
+                    if suggested_fields:
+                        custom_fields = suggested_fields
+                        if args.debug:
+                            print(f"Using AI-suggested fields: {', '.join(custom_fields)}")
             
             # Format as table
             try:

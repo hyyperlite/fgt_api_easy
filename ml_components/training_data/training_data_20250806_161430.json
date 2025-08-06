@@ -1,0 +1,251 @@
+{
+  "examples": [
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web",
+        "srcaddr": "internal",
+        "dstaddr": "all",
+        "action": "accept"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774883",
+      "features": "cmdb firewall policy policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 2,
+        "name": "Block_Social",
+        "srcaddr": "users",
+        "dstaddr": "social_media",
+        "action": "deny"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774892",
+      "features": "cmdb firewall policy policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 3,
+        "name": "VPN_Access",
+        "srcaddr": "vpn_users",
+        "dstaddr": "servers",
+        "action": "accept"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774895",
+      "features": "cmdb firewall policy policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web",
+        "srcaddr": "internal",
+        "dstaddr": "all",
+        "action": "accept"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774896",
+      "features": "cmdb firewall policy6 policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 2,
+        "name": "Block_Social",
+        "srcaddr": "users",
+        "dstaddr": "social_media",
+        "action": "deny"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774897",
+      "features": "cmdb firewall policy6 policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/policy6",
+      "data": {
+        "policyid": 3,
+        "name": "VPN_Access",
+        "srcaddr": "vpn_users",
+        "dstaddr": "servers",
+        "action": "accept"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-08-06T16:14:30.774898",
+      "features": "cmdb firewall policy6 policyid name srcaddr dstaddr action"
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "internal_subnet",
+        "type": "subnet",
+        "subnet": "192.168.1.0/24"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774899",
+      "features": "cmdb firewall address name type subnet"
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "web_server",
+        "type": "ipmask",
+        "subnet": "10.0.1.100/32"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774900",
+      "features": "cmdb firewall address name type subnet"
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "custom_http",
+        "protocol": "TCP",
+        "tcp-portrange": "8080"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774900",
+      "features": "cmdb firewall address name protocol tcp-portrange"
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "internal_subnet",
+        "type": "subnet",
+        "subnet": "192.168.1.0/24"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774901",
+      "features": "cmdb firewall service custom name type subnet"
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "web_server",
+        "type": "ipmask",
+        "subnet": "10.0.1.100/32"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774902",
+      "features": "cmdb firewall service custom name type subnet"
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "custom_http",
+        "protocol": "TCP",
+        "tcp-portrange": "8080"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-08-06T16:14:30.774903",
+      "features": "cmdb firewall service custom name protocol tcp-portrange"
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "dst": "0.0.0.0/0",
+        "gateway": "192.168.1.1",
+        "device": "port1",
+        "distance": 10
+      },
+      "category": "routing",
+      "timestamp": "2025-08-06T16:14:30.774904",
+      "features": "cmdb router static dst gateway device distance"
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "dst": "10.0.0.0/8",
+        "gateway": "192.168.1.254",
+        "device": "port2",
+        "distance": 20
+      },
+      "category": "routing",
+      "timestamp": "2025-08-06T16:14:30.774904",
+      "features": "cmdb router static dst gateway device distance"
+    },
+    {
+      "endpoint": "/monitor/router/ipv4",
+      "data": {
+        "dst": "0.0.0.0/0",
+        "gateway": "192.168.1.1",
+        "device": "port1",
+        "distance": 10
+      },
+      "category": "routing",
+      "timestamp": "2025-08-06T16:14:30.774905",
+      "features": "monitor router ipv4 dst gateway device distance"
+    },
+    {
+      "endpoint": "/monitor/router/ipv4",
+      "data": {
+        "dst": "10.0.0.0/8",
+        "gateway": "192.168.1.254",
+        "device": "port2",
+        "distance": 20
+      },
+      "category": "routing",
+      "timestamp": "2025-08-06T16:14:30.774906",
+      "features": "monitor router ipv4 dst gateway device distance"
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "port1",
+        "ip": "192.168.1.1/24",
+        "status": "up",
+        "type": "physical"
+      },
+      "category": "system",
+      "timestamp": "2025-08-06T16:14:30.774907",
+      "features": "cmdb system interface name ip status type"
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "hostname": "FortiGate-100D",
+        "version": "v7.0.0",
+        "serial": "FGT60E123456"
+      },
+      "category": "system",
+      "timestamp": "2025-08-06T16:14:30.774908",
+      "features": "cmdb system interface hostname version serial"
+    },
+    {
+      "endpoint": "/monitor/system/status",
+      "data": {
+        "name": "port1",
+        "ip": "192.168.1.1/24",
+        "status": "up",
+        "type": "physical"
+      },
+      "category": "monitor",
+      "timestamp": "2025-08-06T16:14:30.774909",
+      "features": "monitor system status name ip status type"
+    },
+    {
+      "endpoint": "/monitor/system/status",
+      "data": {
+        "hostname": "FortiGate-100D",
+        "version": "v7.0.0",
+        "serial": "FGT60E123456"
+      },
+      "category": "monitor",
+      "timestamp": "2025-08-06T16:14:30.774909",
+      "features": "monitor system status hostname version serial"
+    }
+  ],
+  "categories": [
+    "system",
+    "firewall_objects",
+    "firewall_policy",
+    "routing",
+    "monitor"
+  ],
+  "total_examples": 20,
+  "created_at": "2025-08-06T16:14:30.775019"
+}

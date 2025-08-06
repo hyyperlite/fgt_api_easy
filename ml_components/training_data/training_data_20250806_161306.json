@@ -1,0 +1,185 @@
+{
+  "examples": [
+    {
+      "endpoint": "/cmdb/firewall/policy",
+      "data": {
+        "policyid": 1,
+        "name": "Allow_Web_Traffic",
+        "srcintf": [
+          {
+            "name": "internal"
+          }
+        ],
+        "dstintf": [
+          {
+            "name": "wan1"
+          }
+        ],
+        "srcaddr": [
+          {
+            "name": "internal_subnet"
+          }
+        ],
+        "dstaddr": [
+          {
+            "name": "all"
+          }
+        ],
+        "service": [
+          {
+            "name": "HTTP"
+          },
+          {
+            "name": "HTTPS"
+          }
+        ],
+        "action": "accept",
+        "status": "enable"
+      },
+      "category": "firewall_policy",
+      "timestamp": "2025-01-01T10:00:00Z",
+      "features": "cmdb firewall policy policyid name srcintf dstintf srcaddr dstaddr service action status"
+    },
+    {
+      "endpoint": "/cmdb/firewall/address",
+      "data": {
+        "name": "internal_subnet",
+        "type": "ipmask",
+        "subnet": "192.168.1.0 255.255.255.0",
+        "comment": "Internal network range"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-01-01T10:05:00Z",
+      "features": "cmdb firewall address name type subnet comment"
+    },
+    {
+      "endpoint": "/cmdb/router/static",
+      "data": {
+        "seq-num": 1,
+        "dst": "0.0.0.0/0",
+        "gateway": "192.168.1.1",
+        "device": "port1",
+        "distance": 10,
+        "status": "enable"
+      },
+      "category": "routing",
+      "timestamp": "2025-01-01T10:10:00Z",
+      "features": "cmdb router static seq-num dst gateway device distance status"
+    },
+    {
+      "endpoint": "/cmdb/system/interface",
+      "data": {
+        "name": "port1",
+        "ip": "192.168.1.1 255.255.255.0",
+        "allowaccess": [
+          "ping",
+          "https",
+          "ssh"
+        ],
+        "type": "physical",
+        "status": "up"
+      },
+      "category": "system",
+      "timestamp": "2025-01-01T10:15:00Z",
+      "features": "cmdb system interface name ip allowaccess type status"
+    },
+    {
+      "endpoint": "/cmdb/vpn/ipsec/phase1-interface",
+      "data": {
+        "name": "VPN_HQ",
+        "interface": "wan1",
+        "remote-gw": "203.0.113.10",
+        "proposal": "aes128-sha256",
+        "dhgrp": "14",
+        "keylife": 28800
+      },
+      "category": "vpn",
+      "timestamp": "2025-01-01T10:20:00Z",
+      "features": "cmdb vpn ipsec phase1-interface name interface remote-gw proposal dhgrp keylife"
+    },
+    {
+      "endpoint": "/monitor/system/status",
+      "data": {
+        "hostname": "FortiGate-100D",
+        "model": "FortiGate-100D",
+        "serial": "FGT60E1234567890",
+        "version": "v7.0.0",
+        "build": "0366",
+        "uptime": 1234567
+      },
+      "category": "monitor",
+      "timestamp": "2025-01-01T10:25:00Z",
+      "features": "monitor system status hostname model serial version build uptime"
+    },
+    {
+      "endpoint": "/cmdb/user/local",
+      "data": {
+        "name": "admin_user",
+        "status": "enable",
+        "type": "password",
+        "passwd": "",
+        "email-to": "admin@company.com"
+      },
+      "category": "user_auth",
+      "timestamp": "2025-01-01T10:30:00Z",
+      "features": "cmdb user local name status type passwd email-to"
+    },
+    {
+      "endpoint": "/cmdb/firewall/service/custom",
+      "data": {
+        "name": "Custom_App_8080",
+        "category": "Web Access",
+        "protocol": "TCP",
+        "tcp-portrange": "8080",
+        "comment": "Custom application port"
+      },
+      "category": "firewall_objects",
+      "timestamp": "2025-01-01T10:35:00Z",
+      "features": "cmdb firewall service custom name category protocol tcp-portrange comment"
+    },
+    {
+      "endpoint": "/monitor/vpn/ipsec",
+      "data": {
+        "name": "VPN_HQ",
+        "rgwy": "203.0.113.10",
+        "tun_id": "10.0.100.1",
+        "status": "up",
+        "incoming_bytes": 1048576,
+        "outgoing_bytes": 2097152
+      },
+      "category": "vpn",
+      "timestamp": "2025-01-01T10:40:00Z",
+      "features": "monitor vpn ipsec name rgwy tun_id status incoming_bytes outgoing_bytes"
+    },
+    {
+      "endpoint": "/cmdb/firewall/addrgrp",
+      "data": {
+        "name": "Internal_Networks",
+        "member": [
+          {
+            "name": "internal_subnet"
+          },
+          {
+            "name": "dmz_subnet"
+          }
+        ],
+        "comment": "All internal network ranges"
+      },
+      "category": "unknown",
+      "timestamp": "2025-01-01T10:45:00Z",
+      "features": "cmdb firewall addrgrp name member comment"
+    }
+  ],
+  "categories": [
+    "system",
+    "monitor",
+    "vpn",
+    "routing",
+    "unknown",
+    "firewall_objects",
+    "firewall_policy",
+    "user_auth"
+  ],
+  "total_examples": 10,
+  "created_at": "2025-08-06T16:13:06.588858"
+}

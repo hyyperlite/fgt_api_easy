@@ -1,3 +1,11 @@
 git+https://github.com/p4r4n0y1ng/pyfgt.git
 requests
 tabulate
+# ML/AI dependencies
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch>=2.0.0
+pickle5>=0.0.11

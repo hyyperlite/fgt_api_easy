@@ -1,0 +1,173 @@
+{
+  "firewall_policy": {
+    "keywords": [
+      "policy",
+      "rule",
+      "allow",
+      "deny",
+      "source",
+      "destination",
+      "srcaddr",
+      "dstaddr",
+      "srcintf",
+      "dstintf",
+      "service",
+      "action"
+    ],
+    "endpoints": [
+      "/cmdb/firewall/policy",
+      "/cmdb/firewall/policy6"
+    ],
+    "fields": [
+      "policyid",
+      "name",
+      "srcaddr",
+      "dstaddr",
+      "action",
+      "status"
+    ]
+  },
+  "firewall_objects": {
+    "keywords": [
+      "address",
+      "addrgrp",
+      "service",
+      "custom",
+      "group",
+      "member"
+    ],
+    "endpoints": [
+      "/cmdb/firewall/address",
+      "/cmdb/firewall/addrgrp",
+      "/cmdb/firewall/service/custom",
+      "/cmdb/firewall/service/group"
+    ],
+    "fields": [
+      "name",
+      "subnet",
+      "type",
+      "member",
+      "comment"
+    ]
+  },
+  "routing": {
+    "keywords": [
+      "route",
+      "static",
+      "gateway",
+      "interface",
+      "dst",
+      "device",
+      "distance",
+      "router",
+      "ipv4",
+      "ipv6"
+    ],
+    "endpoints": [
+      "/cmdb/router/static",
+      "/monitor/router/ipv4"
+    ],
+    "fields": [
+      "dst",
+      "gateway",
+      "device",
+      "distance",
+      "interface"
+    ]
+  },
+  "vpn": {
+    "keywords": [
+      "vpn",
+      "ipsec",
+      "ssl",
+      "tunnel",
+      "phase1",
+      "phase2",
+      "certificate",
+      "proposal",
+      "peer"
+    ],
+    "endpoints": [
+      "/cmdb/vpn/ipsec/phase1-interface",
+      "/cmdb/vpn/ipsec/phase2-interface",
+      "/monitor/vpn/ipsec"
+    ],
+    "fields": [
+      "name",
+      "interface",
+      "peer",
+      "proposal",
+      "status"
+    ]
+  },
+  "system": {
+    "keywords": [
+      "system",
+      "status",
+      "interface",
+      "resource",
+      "license",
+      "version",
+      "hostname",
+      "model",
+      "serial"
+    ],
+    "endpoints": [
+      "/cmdb/system/interface",
+      "/monitor/system/status",
+      "/monitor/system/interface"
+    ],
+    "fields": [
+      "name",
+      "ip",
+      "status",
+      "type",
+      "version",
+      "model"
+    ]
+  },
+  "user_auth": {
+    "keywords": [
+      "user",
+      "local",
+      "group",
+      "auth",
+      "authentication",
+      "ldap",
+      "radius",
+      "login"
+    ],
+    "endpoints": [
+      "/cmdb/user/local",
+      "/cmdb/user/group"
+    ],
+    "fields": [
+      "name",
+      "status",
+      "type",
+      "member"
+    ]
+  },
+  "monitor": {
+    "keywords": [
+      "monitor",
+      "status",
+      "statistics",
+      "bytes",
+      "packets",
+      "session",
+      "traffic",
+      "performance"
+    ],
+    "endpoints": [
+      "/monitor/system/status",
+      "/monitor/system/interface"
+    ],
+    "fields": [
+      "name",
+      "status",
+      "rx_bytes",
+      "tx_bytes"
+    ]
+  }
+}
