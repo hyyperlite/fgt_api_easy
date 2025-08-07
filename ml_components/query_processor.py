@@ -49,6 +49,15 @@ class QueryProcessor:
         
         # Define query intents and their patterns
         self.query_intents = {
+            'field_selection': {
+                'patterns': [
+                    r'\b(show|display|get|only|just)\s+(only|just)?\s*([a-zA-Z_,\s]+?)\s+(field|fields|column|columns)',
+                    r'\b(only|just)\s+(show|display|get)?\s*([a-zA-Z_,\s]+?)(?:\s+from|\s+for|\s*$)',
+                    r'\b(get|show|display)\s+(only|just)\s+([a-zA-Z_,\s]+?)(?:\s+from|\s+for|\s*$)',
+                    r'\b(give\s+me|show\s+me|list)\s+(only|just)?\s*([a-zA-Z_,\s]+?)(?:\s+from|\s+for|\s*$)'
+                ],
+                'keywords': ['only', 'just', 'field', 'fields', 'column', 'columns', 'show me', 'give me']
+            },
             'filter': {
                 'patterns': [
                     r'\b(show|display|list)\s+(only|just)\s+(.+)',
@@ -79,17 +88,21 @@ class QueryProcessor:
                 'patterns': [
                     r'\b(summarize|summary|overview|count)\s*(.+)?',
                     r'\b(total|sum|aggregate)\s+(.+)',
-                    r'\bhow\s+many\b(.+)?'
+                    r'\bhow\s+many\b(.+)?',
+                    r'\b(give\s+me\s+a|provide\s+a)\s+(summary|overview)',
+                    r'\b(brief|short)\s+(summary|overview|description)'
                 ],
-                'keywords': ['summary', 'summarize', 'overview', 'total', 'count', 'how many']
+                'keywords': ['summary', 'summarize', 'overview', 'total', 'count', 'how many', 'brief', 'short']
             },
             'format': {
                 'patterns': [
-                    r'\b(format|display|show)\s+as\s+(table|json|tree|list)',
-                    r'\b(table|json|tree|list)\s+format',
-                    r'\bin\s+(table|json|tree|list)\s+format'
+                    r'\b(format|display|show)\s+as\s+(table|json|tree|list|summary)',
+                    r'\b(table|json|tree|list|summary)\s+format',
+                    r'\bin\s+(table|json|tree|list|summary)\s+format',
+                    r'\bas\s+(table|json|tree|list|summary)',
+                    r'\bin\s+(table|json|tree|list|summary)'
                 ],
-                'keywords': ['format', 'table', 'json', 'tree', 'list']
+                'keywords': ['format', 'table', 'json', 'tree', 'list', 'summary', 'as']
             },
             'limit': {
                 'patterns': [
@@ -439,13 +452,95 @@ class QueryProcessor:
         
         return modifiers
     
+    def extract_requested_fields(self, query: str) -> List[str]:
+        """
+        Extract specific fields that the user has requested
+        
+        Args:
+            query: User's natural language query
+            
+        Returns:
+            List of field names requested by the user
+        """
+        query_lower = query.lower()
+        requested_fields = []
+        
+        # Pattern 1: "only field1, field2, field3"
+        only_match = re.search(r'\b(?:only|just)\s+([a-zA-Z_,\s]+?)(?:\s+from|\s+for|\s*$)', query_lower)
+        if only_match:
+            fields_text = only_match.group(1)
+            # Split by commas and clean up
+            fields = [f.strip() for f in re.split(r'[,\s]+', fields_text) if f.strip()]
+            requested_fields.extend(fields)
+        
+        # Pattern 2: "show me field1 and field2"
+        show_me_match = re.search(r'\b(?:show\s+me|give\s+me|list)\s+([a-zA-Z_,\s]+?)(?:\s+from|\s+for|\s*$)', query_lower)
+        if show_me_match:
+            fields_text = show_me_match.group(1)
+            # Remove common words
+            fields_text = re.sub(r'\b(?:and|or|the|of|in|on|at|to|for|with|by)\b', ' ', fields_text)
+            fields = [f.strip() for f in re.split(r'[,\s]+', fields_text) if f.strip()]
+            requested_fields.extend(fields)
+        
+        # Pattern 3: "field1, field2 fields/columns"
+        fields_match = re.search(r'\b([a-zA-Z_,\s]+?)\s+(?:field|fields|column|columns)', query_lower)
+        if fields_match:
+            fields_text = fields_match.group(1)
+            fields = [f.strip() for f in re.split(r'[,\s]+', fields_text) if f.strip()]
+            requested_fields.extend(fields)
+        
+        # Clean up and normalize field names
+        normalized_fields = []
+        for field in requested_fields:
+            # Remove common non-field words
+            if field not in ['show', 'display', 'get', 'list', 'only', 'just', 'me', 'the', 'a', 'an']:
+                # Map synonyms to standard field names
+                normalized_field = self._normalize_field_name(field)
+                if normalized_field and normalized_field not in normalized_fields:
+                    normalized_fields.append(normalized_field)
+        
+        return normalized_fields
+    
     def _normalize_field_name(self, field: str) -> str:
         """Normalize field name using synonyms"""
         field_lower = field.lower().strip()
         
-        for canonical_field, synonyms in self.field_synonyms.items():
+        # Direct mapping
+        field_mappings = {
+            # Common field variations
+            'id': 'policyid',
+            'policy': 'policyid', 
+            'rule': 'policyid',
+            'number': 'policyid',
+            'src': 'srcaddr',
+            'source': 'srcaddr',
+            'dst': 'dstaddr', 
+            'dest': 'dstaddr',
+            'destination': 'dstaddr',
+            'from': 'srcaddr',
+            'to': 'dstaddr',
+            'port': 'service',
+            'ports': 'service',
+            'protocol': 'service',
+            'ip': 'srcaddr',
+            'address': 'srcaddr',
+            'enabled': 'status',
+            'disabled': 'status',
+            'active': 'status',
+            'interface': 'srcintf',
+            'intf': 'srcintf',
+            'comments': 'comments',
+            'comment': 'comments',
+            'description': 'comments'
+        }
+        
+        if field_lower in field_mappings:
+            return field_mappings[field_lower]
+        
+        # Check synonyms from existing mapping
+        for standard_field, synonyms in self.field_synonyms.items():
             if field_lower in synonyms:
-                return canonical_field
+                return standard_field
         
         return field_lower
     
@@ -527,6 +622,124 @@ class QueryProcessor:
             suggestions.append("Try being more specific about what you want to see")
         
         return suggestions[:3]  # Limit suggestions
+    
+    def apply_intelligent_filtering(self, data: Any, user_query: str) -> Dict[str, Any]:
+        """
+        Apply intelligent filtering and formatting based on user query
+        
+        Args:
+            data: Raw API response data
+            user_query: User's natural language request
+            
+        Returns:
+            Dict with filtered/formatted data and metadata
+        """
+        result = {
+            'original_data': data,
+            'filtered_data': data,
+            'applied_operations': [],
+            'requested_fields': [],
+            'display_format': 'table',
+            'summary_requested': False
+        }
+        
+        try:
+            # Extract what the user specifically wants
+            requested_fields = self.extract_requested_fields(user_query)
+            result['requested_fields'] = requested_fields
+            
+            # Determine format preference
+            query_lower = user_query.lower()
+            if any(fmt in query_lower for fmt in ['json', 'as json', 'in json']):
+                result['display_format'] = 'json'
+            elif any(fmt in query_lower for fmt in ['summary', 'summarize', 'overview', 'brief']):
+                result['display_format'] = 'summary'
+                result['summary_requested'] = True
+            elif any(fmt in query_lower for fmt in ['list', 'simple']):
+                result['display_format'] = 'list'
+            
+            # Apply field filtering if specific fields were requested
+            if requested_fields and isinstance(data, dict) and 'results' in data:
+                filtered_results = []
+                for item in data['results']:
+                    if isinstance(item, dict):
+                        # Extract only requested fields
+                        filtered_item = {}
+                        for field in requested_fields:
+                            if field in item:
+                                filtered_item[field] = item[field]
+                            # Also check for partial matches
+                            else:
+                                for key in item.keys():
+                                    if field.lower() in key.lower() or key.lower() in field.lower():
+                                        filtered_item[key] = item[key]
+                                        break
+                        if filtered_item:  # Only add if we found matching fields
+                            filtered_results.append(filtered_item)
+                
+                if filtered_results:
+                    result['filtered_data'] = {'results': filtered_results}
+                    result['applied_operations'].append(f"Filtered to show only: {', '.join(requested_fields)}")
+            
+            # Apply value filtering (enabled/disabled, etc.)
+            if any(term in query_lower for term in ['enabled', 'active', 'up']):
+                result = self._filter_by_status(result, 'enabled')
+            elif any(term in query_lower for term in ['disabled', 'inactive', 'down']):
+                result = self._filter_by_status(result, 'disabled')
+            
+            # Apply limit if requested
+            limit_match = re.search(r'\b(?:top|first|limit|show)\s+(\d+)', query_lower)
+            if limit_match:
+                limit = int(limit_match.group(1))
+                result = self._apply_limit(result, limit)
+            
+            return result
+            
+        except Exception as e:
+            # If filtering fails, return original data
+            result['filtered_data'] = data
+            result['applied_operations'].append(f"Error in filtering: {e}")
+            return result
+    
+    def _filter_by_status(self, result: Dict[str, Any], status: str) -> Dict[str, Any]:
+        """Filter data by status (enabled/disabled)"""
+        try:
+            data = result['filtered_data']
+            if isinstance(data, dict) and 'results' in data:
+                filtered_results = []
+                for item in data['results']:
+                    if isinstance(item, dict):
+                        item_status = item.get('status', '').lower()
+                        # Check various status fields
+                        if (status == 'enabled' and 
+                            (item_status in ['enable', 'enabled', 'active', 'up'] or 
+                             item.get('enable', '').lower() == 'enable')):
+                            filtered_results.append(item)
+                        elif (status == 'disabled' and 
+                              (item_status in ['disable', 'disabled', 'inactive', 'down'] or 
+                               item.get('enable', '').lower() == 'disable')):
+                            filtered_results.append(item)
+                
+                if filtered_results:
+                    result['filtered_data'] = {'results': filtered_results}
+                    result['applied_operations'].append(f"Filtered to show only {status} items")
+        except:
+            pass  # Keep original data if filtering fails
+        
+        return result
+    
+    def _apply_limit(self, result: Dict[str, Any], limit: int) -> Dict[str, Any]:
+        """Apply limit to results"""
+        try:
+            data = result['filtered_data']
+            if isinstance(data, dict) and 'results' in data:
+                limited_results = data['results'][:limit]
+                result['filtered_data'] = {'results': limited_results}
+                result['applied_operations'].append(f"Limited to top {limit} results")
+        except:
+            pass  # Keep original data if limiting fails
+        
+        return result
 
 
 if __name__ == "__main__":

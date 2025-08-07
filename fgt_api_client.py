@@ -36,9 +36,15 @@ except ImportError:
 
 # ML/AI components - optional import
 ML_AVAILABLE = False
+NL_INTERFACE_AVAILABLE = False
 try:
     from ml_components import EndpointContextClassifier, IntelligentDisplayEngine, QueryProcessor, MLModelTrainer
     ML_AVAILABLE = True
+    try:
+        from ml_components.natural_language_interface import NaturalLanguageInterface, interactive_session
+        NL_INTERFACE_AVAILABLE = True
+    except ImportError:
+        pass
 except ImportError:
     pass  # ML components are optional
 
@@ -1707,32 +1713,77 @@ class FortiGateAPIClient:
                 # Process the user query
                 query_result = self.query_processor.process_query(user_query, response_data)
                 
-                # Apply intelligent display optimization
+                # Apply AI-powered intelligent display formatting
                 if self.display_engine and 'results' in response_data:
-                    display_result = self.display_engine.optimize_display(
-                        endpoint, response_data['results'], user_query, ai_format
+                    # Import AI formatter
+                    try:
+                        from ml_components.ai_formatter import format_with_ai
+                        
+                        # Use AI formatter for intelligent output
+                        ai_formatted_output = format_with_ai(
+                            response_data['results'], 
+                            user_query, 
+                            endpoint
+                        )
+                        
+                        # Enhance the response with AI insights
+                        enhanced_response = response_data.copy()
+                        enhanced_response['ai_processing'] = {
+                            'query_analysis': query_result,
+                            'ai_formatted_output': ai_formatted_output,
+                            'ml_enabled': True,
+                            'formatting_type': 'ai_powered'
+                        }
+                        return status_code, enhanced_response
+                        
+                    except ImportError:
+                        # Fallback to original display optimization
+                        display_result = self.display_engine.optimize_display(
+                            endpoint, response_data['results'], user_query, ai_format
+                        )
+                        
+                        # Enhance the response with AI insights
+                        enhanced_response = response_data.copy()
+                        enhanced_response['ai_processing'] = {
+                            'query_analysis': query_result,
+                            'display_optimization': display_result,
+                            'ml_enabled': True
+                        }
+                        return status_code, enhanced_response
+                    
+            elif self.display_engine and 'results' in response_data:
+                # Apply AI formatting for non-query requests
+                try:
+                    from ml_components.ai_formatter import format_with_ai
+                    
+                    # Use default table formatting for non-query requests
+                    default_query = "show as a table" if not ai_format else f"show as {ai_format}"
+                    ai_formatted_output = format_with_ai(
+                        response_data['results'], 
+                        default_query, 
+                        endpoint
                     )
                     
-                    # Enhance the response with AI insights
                     enhanced_response = response_data.copy()
                     enhanced_response['ai_processing'] = {
-                        'query_analysis': query_result,
+                        'ai_formatted_output': ai_formatted_output,
+                        'ml_enabled': True,
+                        'formatting_type': 'ai_powered'
+                    }
+                    return status_code, enhanced_response
+                    
+                except ImportError:
+                    # Fallback to basic optimization without user query
+                    display_result = self.display_engine.optimize_display(
+                        endpoint, response_data['results'], display_format=ai_format
+                    )
+                    
+                    enhanced_response = response_data.copy()
+                    enhanced_response['ai_processing'] = {
                         'display_optimization': display_result,
                         'ml_enabled': True
                     }
                     return status_code, enhanced_response
-                    
-            elif self.display_engine and 'results' in response_data:
-                # Apply basic optimization without user query
-                display_result = self.display_engine.optimize_display(
-                    endpoint, response_data['results'], display_format=ai_format
-                )
-                
-                enhanced_response = response_data.copy()
-                enhanced_response['ai_processing'] = {
-                    'display_optimization': display_result,
-                    'ml_enabled': True
-                }
                 return status_code, enhanced_response
             
         except Exception as e:
@@ -1937,45 +1988,54 @@ Examples:
   # Get all address objects using API key
   %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
 
-  # Get address objects in specific VDOM with filter
-  %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address -q 'vdom=root' -q 'format=name'
+  # Natural language command (uses ./config/ directory by default)
+  %(prog)s --ai-mode "get firewall policies from host gw1"
+
+  # Interactive mode with default config directory
+  %(prog)s --interactive
+
+  # Interactive mode with custom host files
+  %(prog)s --interactive --host-files /path/to/hosts.json /path/to/other.ini
+
+  # Interactive mode with custom host directory
+  %(prog)s --interactive --host-files /path/to/config/dir/
 
   # Create an address object using JSON data  
   %(prog)s -i 192.168.1.99 -k your_api_key -m post -e /cmdb/firewall/address -d '{"name": "test_host", "subnet": "10.1.1.1/32"}'
 
-  # Use configuration file
+  # Use traditional configuration file
   %(prog)s -c config.ini -m get -e /cmdb/firewall/address
-
-  # Get address objects (default table format)
-  %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
-
-  # Get address objects with specific table fields
-  %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --table-fields name,subnet,type
-
-  # Get firewall policies (default table format)
-  %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy
-
-  # Get raw JSON output (compact)
-  %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --format json
 
   # Enable SSL warnings (disabled by default)
   %(prog)s -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --ssl-warnings
+
+Host Configuration Files:
+  By default, natural language and interactive modes load hosts from ./config/ directory.
+  Use --host-files to specify custom files or directories (supports both JSON and INI).
+  
+  Host configs are never persisted between sessions for security.
 
 Configuration file format (INI):
   [fortigate]
   host = 192.168.1.99
   apikey = your_api_key_here
-  # or use username/password:
-  # username = admin
-  # password = your_password
 
-Configuration file format (JSON):
+Host file format (JSON):
   {
-    "fortigate": {
-      "host": "192.168.1.99",
-      "apikey": "your_api_key_here"
+    "hosts": {
+      "gw1": {"ip": "192.168.1.99", "apikey": "your_api_key"},
+      "gw2": {"ip": "192.168.1.100", "apikey": "another_key"}
     }
   }
+
+Host file format (INI):
+  [gw1]
+  ip = 192.168.1.99
+  apikey = your_api_key
+  
+  [gw2]
+  ip = 192.168.1.100
+  apikey = another_key
         """)
     
     # Connection arguments group
@@ -2030,11 +2090,21 @@ Configuration file format (JSON):
     # ML/AI options (only shown if ML components are available)
     if ML_AVAILABLE:
         ai_group = parser.add_argument_group('AI/ML Options (Experimental)')
+        
+        # Natural Language Interface
+        if NL_INTERFACE_AVAILABLE:
+            ai_group.add_argument('--ai-mode', '--natural', metavar='COMMAND',
+                                 help='Natural language command (e.g., "get firewall policies from host gw1")')
+            ai_group.add_argument('--interactive', '--chat', action='store_true',
+                                 help='Start interactive natural language session')
+            ai_group.add_argument('--host-files', metavar='PATH', nargs='*',
+                                 help='Directory or files containing host configurations (JSON/INI). Can specify multiple files or a directory path.')
+        
         ai_group.add_argument('--enable-ai', action='store_true',
                              help='Enable AI/ML features for intelligent data processing')
         ai_group.add_argument('--ai-query', metavar='QUERY',
                              help='Natural language query to process results (e.g., "show only enabled policies")')
-        ai_group.add_argument('--ai-format', choices=['auto', 'table', 'summary', 'grouped'],
+        ai_group.add_argument('--ai-format', choices=['auto', 'table', 'summary', 'tree', 'json'],
                              default='auto', help='AI-suggested display format (default: auto)')
         ai_group.add_argument('--train-models', action='store_true',
                              help='Train ML models using collected data')
@@ -2050,6 +2120,52 @@ Configuration file format (JSON):
         )
     
     args = parser.parse_args()
+    
+    # Handle natural language interface first
+    if (NL_INTERFACE_AVAILABLE and hasattr(args, 'ai_mode') and args.ai_mode):
+        print("🤖 Processing natural language command...")
+        host_files = getattr(args, 'host_files', None)
+        nl_interface = NaturalLanguageInterface(host_files=host_files)
+        parsed_cmd = nl_interface.parse_natural_command(args.ai_mode)
+        
+        print(nl_interface.get_interpretation_summary(parsed_cmd))
+        
+        # Prompt for missing information if needed
+        if not parsed_cmd.host_config:
+            parsed_cmd = nl_interface.prompt_for_missing_info(parsed_cmd)
+        
+        # Ask for confirmation if confidence is low
+        if parsed_cmd.confidence < 0.7:
+            confirm = input(f"⚠️  Confidence is {parsed_cmd.confidence:.1%}. Proceed? (y/N): ")
+            if confirm.lower() != 'y':
+                print("👋 Command cancelled.")
+                sys.exit(0)
+        
+        # Override args with parsed values
+        args.method = parsed_cmd.method
+        args.endpoint = parsed_cmd.endpoint
+        args.enable_ai = True
+        if parsed_cmd.format != 'auto':
+            args.ai_format = parsed_cmd.format
+        if parsed_cmd.query:
+            args.ai_query = parsed_cmd.query
+        
+        # Set connection parameters from host config (API key only)
+        if parsed_cmd.host_config:
+            args.host = parsed_cmd.host_config['ip']
+            if parsed_cmd.host_config.get('apikey'):
+                args.apikey = parsed_cmd.host_config['apikey']
+            else:
+                print("❌ Error: No API key found in host configuration")
+                print("💡 FortiGate REST API requires API key authentication")
+                sys.exit(1)
+    
+    elif (NL_INTERFACE_AVAILABLE and hasattr(args, 'interactive') and args.interactive):
+        print("🤖 Starting interactive AI mode...")
+        host_files = getattr(args, 'host_files', None)
+        nl_interface = NaturalLanguageInterface(host_files=host_files)
+        interactive_session(nl_interface, host_files)
+        sys.exit(0)
     
     # Check if this is an AI-only command that doesn't need method/endpoint
     ai_only_command = (ML_AVAILABLE and 
@@ -2209,6 +2325,14 @@ Configuration file format (JSON):
                     print()  # Add spacing
         
         # Handle different output formats
+        
+        # Check if we have AI-formatted output and display it
+        if (enable_ai and 'ai_processing' in response and 
+            'ai_formatted_output' in response['ai_processing']):
+            print("🤖 AI-Formatted Output:")
+            print(response['ai_processing']['ai_formatted_output'])
+            return
+        
         if args.format == 'table':
             # Parse table fields if provided
             custom_fields = None

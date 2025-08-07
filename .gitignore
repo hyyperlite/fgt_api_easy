@@ -216,3 +216,9 @@ tmp/*
 # Test output
 test_output/
 test_results/
+
+# Configuration files (may contain sensitive API keys)
+config/
+config/*
+*.ini
+*.json

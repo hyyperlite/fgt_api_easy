@@ -1,72 +1,162 @@
-# FortiGate API Generic Client
+# FortiGate API Client with AI/ML
 
-A simple Python command-line application for interacting with FortiGate devices using the [pyfgt](https://github.com/p4r4n0y1ng/pyfgt) library.
+An intelligent Python command-line application for interacting with FortiGate devices with built-in AI/ML capabilities for natural language queries and smart data formatting.
 
-## Features
+## ⚡ **Super Quick Start**
 
-- Support for both API key and username/password authentication
-- Configuration file support (INI and JSON formats)
-- All HTTP methods (GET, POST, PUT, DELETE)
-- Query parameter support for filtering and formatting
-- JSON data input for POST/PUT requests
-- Multiple output formats: JSON, pretty JSON, and table
-- Table output with automatic field detection for common FortiGate objects
-- Customizable table fields and formatting
-- Comprehensive error handling
-- Debug mode support
+```bash
+git clone <repository-url>
+cd fgt_api_generic
+./install.sh               # One-click installation
+cp config.ini.example config.ini    # Copy config template
+# Edit config.ini with your FortiGate IP and API key
+./fgt --ai-status -c config.ini      # Verify everything works
+```
 
-## Installation
+## ✨ Features
 
-### Option 1: Using Virtual Environment (Recommended)
+### Core Functionality
+- **Multi-format authentication**: API key or username/password
+- **Flexible configuration**: INI and JSON config file support  
+- **Complete REST API support**: GET, POST, PUT, DELETE operations
+- **Smart data formatting**: Automatic table formatting for FortiGate objects
+- **Comprehensive error handling**: Graceful error reporting and debugging
 
-Using a virtual environment is the recommended approach as it isolates the project dependencies from your system Python installation.
+### 🤖 AI/ML Capabilities
+- **Natural language queries**: "show only enabled policies", "format as CSV"
+- **Intelligent data formatting**: Context-aware output optimization
+- **Smart field selection**: Automatic extraction of relevant fields
+- **Multiple output formats**: Tables, JSON, CSV, HTML, summaries
+- **Content filtering**: Natural language-based data filtering
+- **Intent classification**: Understands user intent and formats accordingly
 
-1. Clone or download this repository
-2. Create and activate a virtual environment:
-   ```bash
-   # Create virtual environment
-   python3 -m venv fgt_api_env
-   
-   # Activate virtual environment
-   # On Linux/macOS:
-   source fgt_api_env/bin/activate
-   
-   # On Windows:
-   # fgt_api_env\Scripts\activate
-   ```
-3. Install the required packages:
-   ```bash
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
-   ```
-   
-   Or use the requirements file:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🚀 Quick Start (Recommended)
 
-4. When finished, you can deactivate the virtual environment:
-   ```bash
-   deactivate
-   ```
+### One-Click Installation
+```bash
+git clone <repository-url>
+cd fgt_api_generic
+./install.sh
+```
 
-### Option 2: Global Python Installation
+### Manual Installation
+```bash
+git clone <repository-url>
+cd fgt_api_generic
 
-If you prefer to install packages globally (not recommended for production environments):
+# Create virtual environment and install dependencies
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 
-1. Clone or download this repository
-2. Install the required packages globally:
-   ```bash
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
-   ```
-   
-   Or use the requirements file:
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Verify installation
+python3 setup_ml.py
+```
 
-**Note:** Global installation may cause conflicts with other Python projects on your system. Virtual environments are strongly recommended.
+### Configuration
+```bash
+# Copy and edit config file
+cp config.ini.example config.ini
+# Edit config.ini with your FortiGate IP and API key
+```
 
-## Usage
+### Quick Test
+```bash
+# Test basic functionality
+./fgt --ai-status -c config.ini
+
+# Try natural language queries  
+./fgt --enable-ai --ai-query "show only enabled policies" -c config.ini -m get -e /cmdb/firewall/policy
+
+# Interactive mode
+./fgt --interactive -c config.ini
+```
+
+## 📦 Alternative Installation Methods
+
+### Manual Installation
+
+#### Option 1: Using Virtual Environment
+```bash
+# Create virtual environment
+python3 -m venv fgt_api_env
+source fgt_api_env/bin/activate  # On Windows: fgt_api_env\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify setup
+python3 setup_ml.py
+```
+
+#### Option 2: Global Installation
+```bash
+# Install globally (not recommended for production)
+pip install -r requirements.txt
+python3 setup_ml.py
+```
+
+## ⚙️ Configuration
+
+### Quick Config Setup
+```bash
+# Use the example config as template
+cp config.ini.example config.ini
+
+# Edit with your details
+[fortigate]
+host = 192.168.1.99
+apikey = your_api_key_here
+enable_ml = true
+```
+
+### Alternative Config Formats
+The application supports both INI and JSON configuration formats. See `config.json.example` for JSON format.
+
+## 🤖 AI/ML Features
+
+### Natural Language Queries
+Use natural language to interact with FortiGate data:
+
+```bash
+# Smart filtering
+./fgt --enable-ai --ai-query "show only enabled policies" -c config.ini -m get -e /cmdb/firewall/policy
+
+# Format conversion  
+./fgt --enable-ai --ai-query "format as CSV" -c config.ini -m get -e /cmdb/firewall/address
+
+# Field selection
+./fgt --enable-ai --ai-query "show me just the name and status fields" -c config.ini -m get -e /cmdb/system/interface
+
+# Data summaries
+./fgt --enable-ai --ai-query "give me a brief summary" -c config.ini -m get -e /cmdb/firewall/policy
+```
+
+### Interactive Mode with AI
+```bash
+# Start interactive session with AI assistance
+./fgt --interactive -c config.ini
+
+# Example interactive commands:
+fgt> show firewall policies as CSV from gw1
+fgt> list interfaces where status is up
+fgt> summarize VPN tunnel status
+fgt> display only enabled policies in table format
+```
+
+### AI Status and Training
+```bash
+# Check AI system status
+./fgt --ai-status -c config.ini
+
+# Train models with real data (optional)
+./fgt --train-models -c config.ini
+
+# Demo AI capabilities
+python3 ml_demo.py
+```
+
+## 📖 Usage Examples
 
 ### Command Line Arguments
 
@@ -324,7 +414,56 @@ If you're upgrading from a previous version that used `--pretty` and `--no-prett
 
 The old flags have been removed in favor of the cleaner `--format` option. Table format is now the default for better readability of FortiGate API responses.
 
-## Requirements
+## 🔧 Troubleshooting
+
+### Installation Issues
+```bash
+# If setup_ml.py fails, try manual verification:
+python3 -c "import sklearn, pandas, numpy; print('ML dependencies OK')"
+python3 -c "from ml_components import EndpointContextClassifier; print('ML components OK')"
+
+# Check Python version (3.8+ required)
+python3 --version
+
+# Update pip if needed
+pip install --upgrade pip
+```
+
+### AI/ML Issues
+```bash
+# Check AI system status
+./fgt --ai-status -c config.ini
+
+# Regenerate models if needed
+./fgt --train-models -c config.ini
+
+# Test with basic query first
+./fgt --enable-ai --ai-query "show data" -c config.ini -m get -e /cmdb/system/status
+```
+
+### Connection Issues
+```bash
+# Test basic connectivity
+./fgt --debug -c config.ini -m get -e /cmdb/system/status
+
+# Check SSL settings
+./fgt --no-ssl -c config.ini -m get -e /cmdb/system/status
+```
+
+## 📚 Additional Resources
+
+- **AI/ML Quick Reference**: See `AI_ML_QUICK_REFERENCE.md` for detailed AI feature documentation
+- **Demo Script**: Run `python3 ml_demo.py` to see AI capabilities
+- **Configuration Examples**: Check `config/` directory for host configuration examples
+
+## 🔐 Security Notes
+
+- **API Keys**: Preferred over username/password authentication
+- **SSL Verification**: Use `--verify-ssl` in production environments  
+- **Configuration Security**: Protect config files with appropriate permissions (`chmod 600 config.ini`)
+- **Local Processing**: All AI/ML processing is done locally - no external API calls
+
+## 📋 Requirements
 
 - Python 3.6+
 - pyfgt library
