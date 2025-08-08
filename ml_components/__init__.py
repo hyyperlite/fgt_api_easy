@@ -1,20 +1,24 @@
 """
-ML Components for FortiGate API Client
+ML Components Package
 
-This package provides machine learning capabilities for intelligent data processing,
-context classification, and natural language querying of FortiGate API responses.
-
-All ML operations are performed locally without external API calls to ensure data privacy.
+This package initializes the AI/ML components for the FortiGate API client.
+It has been updated to support the new, enhanced AI pipeline.
 """
 
-from .context_classifier import EndpointContextClassifier
-from .display_optimizer import IntelligentDisplayEngine
-from .query_processor import QueryProcessor
-from .model_trainer import MLModelTrainer
+# Canonical UserIntent dataclass, shared across components
+from .user_intent import UserIntent
+
+# Core components of the enhanced AI pipeline
+from .enhanced_intent_classifier import classify_user_intent
+from .ai_formatter import AIDataFormatter
+
+# Natural Language Interface for interactive mode
+from .natural_language_interface import NaturalLanguageInterface, interactive_session
 
 __all__ = [
-    'EndpointContextClassifier',
-    'IntelligentDisplayEngine', 
-    'QueryProcessor',
-    'MLModelTrainer'
+    'UserIntent',
+    'classify_user_intent',
+    'AIDataFormatter',
+    'NaturalLanguageInterface',
+    'interactive_session'
 ]

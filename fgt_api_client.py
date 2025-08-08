@@ -10,10 +10,10 @@ import argparse
 import json
 import sys
 import configparser
-import datetime
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List, Union
 import warnings
+import datetime
 import os
 
 # Disable SSL warnings by default unless explicitly enabled
@@ -38,15 +38,19 @@ except ImportError:
 ML_AVAILABLE = False
 NL_INTERFACE_AVAILABLE = False
 try:
-    from ml_components import EndpointContextClassifier, IntelligentDisplayEngine, QueryProcessor, MLModelTrainer
+    # New, streamlined components for the enhanced AI pipeline
+    from ml_components import (
+        classify_user_intent, UserIntent, AIDataFormatter,
+        NaturalLanguageInterface, interactive_session
+    )
     ML_AVAILABLE = True
-    try:
-        from ml_components.natural_language_interface import NaturalLanguageInterface, interactive_session
-        NL_INTERFACE_AVAILABLE = True
-    except ImportError:
-        pass
-except ImportError:
-    pass  # ML components are optional
+    NL_INTERFACE_AVAILABLE = True
+except ImportError as e:
+    # Keep a record of the import error for debugging
+    _ml_import_error = e
+    # Define fallbacks for linters, so the script can run without ML features
+    classify_user_intent, UserIntent, AIDataFormatter = None, None, None
+    NaturalLanguageInterface, interactive_session = None, None
 
 
 class TableFormatter:
@@ -236,15 +240,24 @@ class TableFormatter:
         
         for item in data_list:
             row = []
-            for field in fields:
-                value = item.get(field, "-")
-                formatted_value = TableFormatter._flatten_value(value)
-                
-                # Truncate if max_width specified
-                if max_width and len(formatted_value) > max_width:
-                    formatted_value = formatted_value[:max_width-3] + "..."
-                
-                row.append(formatted_value)
+            # Ensure item is a dictionary before trying to access it with .get
+            if not isinstance(item, dict):
+                # If it's not a dict, we can't extract fields.
+                # We'll just display the item as is in the first column.
+                row.append(TableFormatter._flatten_value(item))
+                # Fill the rest of the columns with placeholders
+                for _ in range(len(fields) - 1):
+                    row.append("-")
+            else:
+                for field in fields:
+                    value = item.get(field, "-")
+                    formatted_value = TableFormatter._flatten_value(value)
+                    
+                    # Truncate if max_width specified
+                    if max_width and len(formatted_value) > max_width:
+                        formatted_value = formatted_value[:max_width-3] + "..."
+                    
+                    row.append(formatted_value)
             rows.append(row)
         
         # Generate table
@@ -1020,304 +1033,6 @@ class TableFormatter:
         return "\n".join(tables)
     
     @staticmethod
-    def _format_interface_value(value: Any, value_type: str) -> str:
-        """
-        Format interface values based on type
-        
-        Args:
-            value: The value to format
-            value_type: Type of value (packets, bytes, errors)
-            
-        Returns:
-            Formatted value string
-        """
-        if not isinstance(value, (int, float)) or value == 0:
-            return '0' if value_type == 'errors' else '0'
-        
-        if value_type == 'bytes':
-            # Format bytes in human readable format
-            if value >= 1024**3:  # GB
-                return f"{value/(1024**3):.1f}G"
-            elif value >= 1024**2:  # MB
-                return f"{value/(1024**2):.1f}M"
-            elif value >= 1024:  # KB
-                return f"{value/1024:.1f}K"
-            else:
-                return str(int(value))
-        elif value_type == 'packets':
-            # Format packet counts with commas
-            if value >= 1000000:
-                return f"{value/1000000:.1f}M"
-            elif value >= 1000:
-                return f"{value/1000:.1f}K"
-            else:
-                return f"{int(value):,}"
-        else:  # errors
-            return str(int(value))
-    
-    @staticmethod
-    def _format_generic_nested_dict_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
-                                         max_width: Optional[int] = None) -> str:
-        """
-        Generic formatter for nested dict monitoring responses
-        
-        Args:
-            response_data: The API response data with nested dict structure
-            endpoint: The API endpoint 
-            max_width: Maximum width for cell content
-            
-        Returns:
-            Formatted table string
-        """
-        results = response_data.get('results', {})
-        
-        if not results:
-            return "No data to display"
-        
-        # Check if this is a flat key-value dict (like system status) or nested objects
-        has_nested_objects = any(isinstance(v, dict) for v in results.values())
-        
-        if has_nested_objects:
-            # Convert nested dict to list format for standard table processing  
-            data_list = []
-            for key, value in results.items():
-                if isinstance(value, dict):
-                    # Add the key as a 'name' field
-                    item = {'name': key}
-                    item.update(value)
-                    data_list.append(item)
-            
-            if not data_list:
-                return "No data to display in table format"
-            
-            # Use standard table formatting logic
-            fields = TableFormatter._detect_fields(data_list, endpoint, None)
-            
-            if not fields:
-                return "No suitable fields found for table display"
-            
-            # Prepare table data
-            headers = fields
-            rows = []
-            
-            for item in data_list:
-                row = []
-                for field in fields:
-                    value = item.get(field, "-")
-                    formatted_value = TableFormatter._flatten_value(value)
-                    
-                    # Truncate if max_width specified
-                    if max_width and len(formatted_value) > max_width:
-                        formatted_value = formatted_value[:max_width-3] + "..."
-                    
-                    row.append(formatted_value)
-                rows.append(row)
-            
-            # Generate table
-            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
-            
-            # Add summary info
-            summary = f"FortiGate API: {endpoint} ({len(data_list)} result(s))" if endpoint else f"{len(data_list)} result(s) found"
-            
-            return f"{summary}\n{table}"
-        
-        else:
-            # Handle flat key-value pairs (like system status)
-            summary = f"FortiGate API: {endpoint}" if endpoint else "System Information"
-            
-            headers = ['Property', 'Value']
-            rows = []
-            
-            for key, value in results.items():
-                # Format key for readability
-                formatted_key = key.replace('_', ' ').title()
-                
-                # Format value
-                formatted_value = TableFormatter._flatten_value(value)
-                if max_width and len(formatted_value) > max_width:
-                    formatted_value = formatted_value[:max_width-3] + "..."
-                
-                rows.append([formatted_key, formatted_value])
-            
-            if rows:
-                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
-                return f"{summary}\n{table}"
-            else:
-                return "No data to display"
-    
-    @staticmethod
-    def _format_vpn_ipsec_table(response_data: Dict[str, Any], endpoint: Optional[str] = None, 
-                               max_width: Optional[int] = None) -> str:
-        """
-        Format VPN IPsec monitoring responses as tables
-        
-        Args:
-            response_data: The API response data with VPN IPsec structure
-            endpoint: The API endpoint 
-            max_width: Maximum width for cell content
-            
-        Returns:
-            Formatted table string with VPN IPsec tunnel information
-        """
-        results = response_data.get('results', [])
-        
-        if not results:
-            return "No VPN IPsec tunnels to display"
-        
-        tables = []
-        
-        # Add header with endpoint info
-        summary = f"VPN IPsec Tunnel Status & Statistics"
-        if endpoint:
-            summary = f"FortiGate API: {endpoint}"
-        tables.append(summary)
-        tables.append("=" * len(summary))
-        
-        # Create overview table with key tunnel information
-        tables.append("\nTunnel Overview:")
-        headers = ['Tunnel Name', 'Status', 'Remote Gateway', 'Tunnel ID', 'Connections', 'Creation Time']
-        rows = []
-        
-        for tunnel in results:
-            if isinstance(tunnel, dict):
-                # Format tunnel name
-                name = tunnel.get('name', '-')
-                if max_width and len(name) > 15:
-                    name = name[:12] + "..."
-                
-                # Determine overall tunnel status based on proxyid entries
-                proxyid_list = tunnel.get('proxyid', [])
-                tunnel_status = 'DOWN'
-                if proxyid_list:
-                    # Check if any phase2 is up
-                    for proxy in proxyid_list:
-                        if isinstance(proxy, dict) and proxy.get('status') == 'up':
-                            tunnel_status = 'UP'
-                            break
-                
-                # Get remote gateway
-                rgwy = tunnel.get('rgwy', '-')
-                
-                # Get tunnel ID (prefer IPv4)
-                tun_id = tunnel.get('tun_id', tunnel.get('tun_id6', '-'))
-                
-                # Get connection count
-                conn_count = tunnel.get('connection_count', 0)
-                conn_display = str(conn_count) if conn_count > 0 else '-'
-                
-                # Get creation time (convert seconds to readable format)
-                creation_time = tunnel.get('creation_time', 0)
-                if creation_time > 0:
-                    hours = creation_time // 3600
-                    minutes = (creation_time % 3600) // 60
-                    if hours > 24:
-                        days = hours // 24
-                        hours = hours % 24
-                        time_display = f"{days}d {hours}h"
-                    elif hours > 0:
-                        time_display = f"{hours}h {minutes}m"
-                    else:
-                        time_display = f"{minutes}m"
-                else:
-                    time_display = '-'
-                
-                rows.append([name, tunnel_status, rgwy, tun_id, conn_display, time_display])
-        
-        if rows:
-            table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
-            tables.append(table)
-        
-        # Create traffic statistics table (only for tunnels with traffic)
-        active_tunnels = [t for t in results 
-                         if isinstance(t, dict) and (t.get('incoming_bytes', 0) > 0 or t.get('outgoing_bytes', 0) > 0)]
-        
-        if active_tunnels:
-            tables.append(f"\nTraffic Statistics (Active Tunnels Only):")
-            headers = ['Tunnel Name', 'RX Bytes', 'TX Bytes', 'Total Traffic', 'RX/TX Ratio']
-            rows = []
-            
-            for tunnel in active_tunnels:
-                name = tunnel.get('name', '-')
-                if max_width and len(name) > 15:
-                    name = name[:12] + "..."
-                
-                rx_bytes = tunnel.get('incoming_bytes', 0)
-                tx_bytes = tunnel.get('outgoing_bytes', 0)
-                
-                rx_display = TableFormatter._format_bytes(rx_bytes)
-                tx_display = TableFormatter._format_bytes(tx_bytes)
-                total_display = TableFormatter._format_bytes(rx_bytes + tx_bytes)
-                
-                # Calculate ratio
-                if tx_bytes > 0:
-                    ratio = rx_bytes / tx_bytes
-                    ratio_display = f"{ratio:.2f}"
-                else:
-                    ratio_display = "∞" if rx_bytes > 0 else "0"
-                
-                rows.append([name, rx_display, tx_display, total_display, ratio_display])
-            
-            if rows:
-                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
-                tables.append(table)
-        
-        # Create Phase 2 (proxy ID) details table - only for tunnels with UP proxies
-        up_proxies = []
-        for tunnel in results:
-            if isinstance(tunnel, dict):
-                tunnel_name = tunnel.get('name', 'Unknown')
-                proxyid_list = tunnel.get('proxyid', [])
-                for proxy in proxyid_list:
-                    if isinstance(proxy, dict) and proxy.get('status') == 'up':
-                        proxy['tunnel_name'] = tunnel_name
-                        up_proxies.append(proxy)
-        
-        if up_proxies:
-            tables.append(f"\nActive Phase 2 (Proxy ID) Details:")
-            headers = ['Tunnel', 'Phase 2 Name', 'Status', 'Time Remaining', 'RX Bytes', 'TX Bytes']
-            rows = []
-            
-            for proxy in up_proxies:
-                tunnel_name = proxy.get('tunnel_name', '-')
-                if max_width and len(tunnel_name) > 12:
-                    tunnel_name = tunnel_name[:9] + "..."
-                
-                p2name = proxy.get('p2name', '-')
-                if max_width and len(p2name) > 15:
-                    p2name = p2name[:12] + "..."
-                
-                status = proxy.get('status', '-').upper()
-                
-                # Format expire time
-                expire = proxy.get('expire', 0)
-                if expire > 0:
-                    hours = expire // 3600
-                    minutes = (expire % 3600) // 60
-                    seconds = expire % 60
-                    if hours > 0:
-                        expire_display = f"{hours}h {minutes}m"
-                    elif minutes > 0:
-                        expire_display = f"{minutes}m {seconds}s"
-                    else:
-                        expire_display = f"{seconds}s"
-                else:
-                    expire_display = '-'
-                
-                rx_bytes = proxy.get('incoming_bytes', 0)
-                tx_bytes = proxy.get('outgoing_bytes', 0)
-                
-                rx_display = TableFormatter._format_bytes(rx_bytes)
-                tx_display = TableFormatter._format_bytes(tx_bytes)
-                
-                rows.append([tunnel_name, p2name, status, expire_display, rx_display, tx_display])
-            
-            if rows:
-                table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
-                tables.append(table)
-        
-        return "\n".join(tables)
-    
-    @staticmethod
     def _format_bytes(bytes_val: int) -> str:
         """
         Format byte values in human readable format
@@ -1569,7 +1284,7 @@ class FortiGateAPIClient:
     
     def __init__(self, host: str, username: Optional[str] = None, password: Optional[str] = None, 
                  apikey: Optional[str] = None, use_ssl: bool = True, verify_ssl: bool = False,
-                 timeout: int = 300, debug: bool = False, enable_ml: bool = False):
+                 timeout: int = 300, debug: bool = False):
         """
         Initialize the FortiGate API client
         
@@ -1582,7 +1297,6 @@ class FortiGateAPIClient:
             verify_ssl: Whether to verify SSL certificates (default: False)
             timeout: Request timeout in seconds (default: 300)
             debug: Enable debug mode (default: False)
-            enable_ml: Enable ML/AI features (default: False)
         """
         self.host = host
         self.username = username or "admin"
@@ -1592,23 +1306,6 @@ class FortiGateAPIClient:
         self.verify_ssl = verify_ssl
         self.timeout = timeout
         self.debug = debug
-        self.enable_ml = enable_ml and ML_AVAILABLE
-        
-        # Initialize ML components if enabled and available
-        self.ml_classifier = None
-        self.display_engine = None
-        self.query_processor = None
-        
-        if self.enable_ml:
-            try:
-                self.ml_classifier = EndpointContextClassifier()
-                self.display_engine = IntelligentDisplayEngine(self.ml_classifier)
-                self.query_processor = QueryProcessor()
-                if self.debug:
-                    print("ML/AI components initialized successfully")
-            except Exception as e:
-                print(f"Warning: Could not initialize ML components: {e}")
-                self.enable_ml = False
         
         # Validate authentication parameters
         if not apikey and not password:
@@ -1683,242 +1380,6 @@ class FortiGateAPIClient:
             print(f"Unexpected error: {e}")
             return -4, {"error": "Unexpected error", "details": str(e)}
     
-    def execute_request_with_ai(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None,
-                              query_params: Optional[List[str]] = None, user_query: Optional[str] = None,
-                              ai_format: Optional[str] = None) -> Tuple[int, Dict[str, Any]]:
-        """
-        Execute a request with ML/AI-enhanced processing
-        
-        Args:
-            method: HTTP method (get, post, put, delete)
-            endpoint: API endpoint path
-            data: Request body data (for POST/PUT requests)
-            query_params: List of query parameters
-            user_query: Natural language query for data processing
-            ai_format: Override format for AI display
-            
-        Returns:
-            Tuple of (status_code, enhanced_response_data)
-        """
-        # Execute the regular request first
-        status_code, response_data = self.execute_request(method, endpoint, data, query_params)
-        
-        # If ML is not enabled or request failed, return as-is
-        if not self.enable_ml or status_code != 200:
-            return status_code, response_data
-        
-        # Apply AI processing to the response
-        try:
-            if user_query and self.query_processor:
-                # Process the user query
-                query_result = self.query_processor.process_query(user_query, response_data)
-                
-                # Apply AI-powered intelligent display formatting
-                if self.display_engine and 'results' in response_data:
-                    # Import AI formatter
-                    try:
-                        from ml_components.ai_formatter import format_with_ai
-                        
-                        # Use AI formatter for intelligent output
-                        ai_formatted_output = format_with_ai(
-                            response_data['results'], 
-                            user_query, 
-                            endpoint
-                        )
-                        
-                        # Enhance the response with AI insights
-                        enhanced_response = response_data.copy()
-                        enhanced_response['ai_processing'] = {
-                            'query_analysis': query_result,
-                            'ai_formatted_output': ai_formatted_output,
-                            'ml_enabled': True,
-                            'formatting_type': 'ai_powered'
-                        }
-                        return status_code, enhanced_response
-                        
-                    except ImportError:
-                        # Fallback to original display optimization
-                        display_result = self.display_engine.optimize_display(
-                            endpoint, response_data['results'], user_query, ai_format
-                        )
-                        
-                        # Enhance the response with AI insights
-                        enhanced_response = response_data.copy()
-                        enhanced_response['ai_processing'] = {
-                            'query_analysis': query_result,
-                            'display_optimization': display_result,
-                            'ml_enabled': True
-                        }
-                        return status_code, enhanced_response
-                    
-            elif self.display_engine and 'results' in response_data:
-                # Apply AI formatting for non-query requests
-                try:
-                    from ml_components.ai_formatter import format_with_ai
-                    
-                    # Use default table formatting for non-query requests
-                    default_query = "show as a table" if not ai_format else f"show as {ai_format}"
-                    ai_formatted_output = format_with_ai(
-                        response_data['results'], 
-                        default_query, 
-                        endpoint
-                    )
-                    
-                    enhanced_response = response_data.copy()
-                    enhanced_response['ai_processing'] = {
-                        'ai_formatted_output': ai_formatted_output,
-                        'ml_enabled': True,
-                        'formatting_type': 'ai_powered'
-                    }
-                    return status_code, enhanced_response
-                    
-                except ImportError:
-                    # Fallback to basic optimization without user query
-                    display_result = self.display_engine.optimize_display(
-                        endpoint, response_data['results'], display_format=ai_format
-                    )
-                    
-                    enhanced_response = response_data.copy()
-                    enhanced_response['ai_processing'] = {
-                        'display_optimization': display_result,
-                        'ml_enabled': True
-                    }
-                    return status_code, enhanced_response
-                return status_code, enhanced_response
-            
-        except Exception as e:
-            if self.debug:
-                print(f"Warning: AI processing failed: {e}")
-            # Return original response if AI processing fails
-            return status_code, response_data
-        
-        return status_code, response_data
-    
-    def collect_training_data(self, endpoint: str, response_data: Dict[str, Any], 
-                            expected_category: Optional[str] = None):
-        """
-        Collect data for ML model training
-        
-        Args:
-            endpoint: API endpoint path
-            response_data: Response data from the API
-            expected_category: Expected category (if known)
-        """
-        if not self.enable_ml:
-            return
-        
-        try:
-            training_example = {
-                'endpoint': endpoint,
-                'data': response_data.get('results', response_data),
-                'timestamp': datetime.datetime.now().isoformat(),
-                'category': expected_category or 'unknown'
-            }
-            
-            # Save to training data file
-            training_data_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'training_data')
-            os.makedirs(training_data_dir, exist_ok=True)
-            
-            collected_data_file = os.path.join(training_data_dir, 'collected_data.json')
-            
-            # Load existing data or create new
-            collected_data = []
-            if os.path.exists(collected_data_file):
-                try:
-                    with open(collected_data_file, 'r') as f:
-                        collected_data = json.load(f)
-                except:
-                    collected_data = []
-            
-            # Add new example
-            collected_data.append(training_example)
-            
-            # Keep only recent data (last 1000 examples)
-            if len(collected_data) > 1000:
-                collected_data = collected_data[-1000:]
-            
-            # Save updated data
-            with open(collected_data_file, 'w') as f:
-                json.dump(collected_data, f, indent=2)
-                
-        except Exception as e:
-            if self.debug:
-                print(f"Warning: Could not collect training data: {e}")
-    
-    def train_ml_models(self) -> Dict[str, Any]:
-        """
-        Train ML models using collected data
-        
-        Returns:
-            Dict containing training results
-        """
-        if not self.enable_ml:
-            return {'error': 'ML not enabled'}
-        
-        try:
-            trainer = MLModelTrainer()
-            
-            # Load collected training data
-            training_data_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'training_data')
-            collected_data_file = os.path.join(training_data_dir, 'collected_data.json')
-            
-            if os.path.exists(collected_data_file):
-                with open(collected_data_file, 'r') as f:
-                    collected_examples = json.load(f)
-            else:
-                # Use bootstrap data if no collected data exists
-                bootstrap_file = os.path.join(training_data_dir, 'bootstrap_training_data.json')
-                if os.path.exists(bootstrap_file):
-                    with open(bootstrap_file, 'r') as f:
-                        bootstrap_data = json.load(f)
-                        collected_examples = bootstrap_data.get('examples', [])
-                else:
-                    # Generate synthetic data
-                    collected_examples = trainer.generate_synthetic_training_data({})
-            
-            # Create training data
-            training_data = trainer.create_training_data(collected_examples, save_to_file=True)
-            
-            # Train the classifier
-            results = trainer.train_context_classifier(training_data)
-            
-            # Reload classifier with new model
-            self.ml_classifier = EndpointContextClassifier()
-            self.display_engine = IntelligentDisplayEngine(self.ml_classifier)
-            
-            return results
-            
-        except Exception as e:
-            return {'error': f'Training failed: {str(e)}'}
-    
-    def get_ml_status(self) -> Dict[str, Any]:
-        """Get status of ML components"""
-        if not ML_AVAILABLE:
-            return {'ml_available': False, 'reason': 'ML dependencies not installed'}
-        
-        if not self.enable_ml:
-            return {'ml_available': True, 'ml_enabled': False}
-        
-        status = {
-            'ml_available': True,
-            'ml_enabled': True,
-            'components': {
-                'classifier': self.ml_classifier is not None,
-                'display_engine': self.display_engine is not None,
-                'query_processor': self.query_processor is not None
-            }
-        }
-        
-        # Check for trained models
-        models_dir = os.path.join(os.path.dirname(__file__), 'ml_components', 'models')
-        if os.path.exists(models_dir):
-            model_files = ['classifier.pkl', 'vectorizer.pkl', 'categories.json']
-            trained_models = [f for f in model_files if os.path.exists(os.path.join(models_dir, f))]
-            status['trained_models'] = len(trained_models)
-            status['model_files'] = trained_models
-        
-        return status
-        
 
 def load_config_file(config_path: str) -> Dict[str, str]:
     """
@@ -2024,11 +1485,12 @@ Host file format (JSON):
   {
     "hosts": {
       "gw1": {"ip": "192.168.1.99", "apikey": "your_api_key"},
-      "gw2": {"ip": "192.168.1.100", "apikey": "another_key"}
+           "gw2": {"ip": "192.168.1.100", "apikey": "another_key"}
     }
   }
 
 Host file format (INI):
+
   [gw1]
   ip = 192.168.1.99
   apikey = your_api_key
@@ -2041,7 +1503,7 @@ Host file format (INI):
     # Connection arguments group
     conn_group = parser.add_argument_group('Connection')
     conn_group.add_argument('-c', '--config', metavar='FILE',
-                           help='Configuration file path (INI or JSON format)')
+                                                     help='Configuration file path (INI or JSON format)')
     conn_group.add_argument('-i', '--host', '--ip', metavar='HOST',
                            help='FortiGate IP address or hostname')
     conn_group.add_argument('-u', '--username', metavar='USER', default='admin',
@@ -2093,25 +1555,26 @@ Host file format (INI):
         
         # Natural Language Interface
         if NL_INTERFACE_AVAILABLE:
-            ai_group.add_argument('--ai-mode', '--natural', metavar='COMMAND',
-                                 help='Natural language command (e.g., "get firewall policies from host gw1")')
+            # This argument is deprecated in favor of --ai-query, but kept for now.
+            # It will be removed in a future version.
+            # ai_group.add_argument('--ai-mode', '--natural', metavar='COMMAND',
+            #                      help='DEPRECATED. Use --ai-query instead.')
             ai_group.add_argument('--interactive', '--chat', action='store_true',
                                  help='Start interactive natural language session')
             ai_group.add_argument('--host-files', metavar='PATH', nargs='*',
-                                 help='Directory or files containing host configurations (JSON/INI). Can specify multiple files or a directory path.')
+                                 help='Directory or files containing host configurations (JSON/INI) for interactive mode.')
         
-        ai_group.add_argument('--enable-ai', action='store_true',
-                             help='Enable AI/ML features for intelligent data processing')
         ai_group.add_argument('--ai-query', metavar='QUERY',
                              help='Natural language query to process results (e.g., "show only enabled policies")')
-        ai_group.add_argument('--ai-format', choices=['auto', 'table', 'summary', 'tree', 'json'],
-                             default='auto', help='AI-suggested display format (default: auto)')
-        ai_group.add_argument('--train-models', action='store_true',
-                             help='Train ML models using collected data')
-        ai_group.add_argument('--ai-status', action='store_true',
-                             help='Show AI/ML component status')
-        ai_group.add_argument('--collect-training-data', action='store_true',
-                             help='Collect this request for ML model training')
+        # The following arguments are no longer needed with the new AI pipeline
+        # ai_group.add_argument('--enable-ai', action='store_true',
+        #                      help='Enable AI/ML features for intelligent data processing')
+        # ai_group.add_argument('--ai-format', choices=['auto', 'table', 'summary', 'tree', 'json'],
+        #                      default='auto', help='AI-suggested display format (default: auto)')
+        # ai_group.add_argument('--train-models', action='store_true',
+        #                      help='Train ML models using collected data')
+        # ai_group.add_argument('--ai-status', action='store_true',
+        #                      help='Show AI/ML component status')
     else:
         # Add a note about ML availability
         parser.add_argument_group('AI/ML Options').add_argument(
@@ -2121,64 +1584,37 @@ Host file format (INI):
     
     args = parser.parse_args()
     
-    # Handle natural language interface first
-    if (NL_INTERFACE_AVAILABLE and hasattr(args, 'ai_mode') and args.ai_mode):
-        print("🤖 Processing natural language command...")
+    # Handle interactive mode first, as it has its own loop.
+    if NL_INTERFACE_AVAILABLE and hasattr(args, 'interactive') and args.interactive:
+        assert NaturalLanguageInterface is not None
+        assert interactive_session is not None
         host_files = getattr(args, 'host_files', None)
-        nl_interface = NaturalLanguageInterface(host_files=host_files)
-        parsed_cmd = nl_interface.parse_natural_command(args.ai_mode)
         
-        print(nl_interface.get_interpretation_summary(parsed_cmd))
-        
-        # Prompt for missing information if needed
-        if not parsed_cmd.host_config:
-            parsed_cmd = nl_interface.prompt_for_missing_info(parsed_cmd)
-        
-        # Ask for confirmation if confidence is low
-        if parsed_cmd.confidence < 0.7:
-            confirm = input(f"⚠️  Confidence is {parsed_cmd.confidence:.1%}. Proceed? (y/N): ")
-            if confirm.lower() != 'y':
-                print("👋 Command cancelled.")
-                sys.exit(0)
-        
-        # Override args with parsed values
-        args.method = parsed_cmd.method
-        args.endpoint = parsed_cmd.endpoint
-        args.enable_ai = True
-        if parsed_cmd.format != 'auto':
-            args.ai_format = parsed_cmd.format
-        if parsed_cmd.query:
-            args.ai_query = parsed_cmd.query
-        
-        # Set connection parameters from host config (API key only)
-        if parsed_cmd.host_config:
-            args.host = parsed_cmd.host_config['ip']
-            if parsed_cmd.host_config.get('apikey'):
-                args.apikey = parsed_cmd.host_config['apikey']
-            else:
-                print("❌ Error: No API key found in host configuration")
-                print("💡 FortiGate REST API requires API key authentication")
-                sys.exit(1)
-    
-    elif (NL_INTERFACE_AVAILABLE and hasattr(args, 'interactive') and args.interactive):
-        print("🤖 Starting interactive AI mode...")
-        host_files = getattr(args, 'host_files', None)
-        nl_interface = NaturalLanguageInterface(host_files=host_files)
-        interactive_session(nl_interface, host_files)
+        # Instantiate the NaturalLanguageInterface and pass it to the session
+        try:
+            nl_interface = NaturalLanguageInterface(host_files=host_files)
+            interactive_session(nl_interface=nl_interface, host_files=host_files)
+        except NameError:
+            # This handles the case where NaturalLanguageInterface is not imported
+            print("Error: Interactive mode components not available.", file=sys.stderr)
+            print("Please ensure all dependencies in requirements.txt are installed.", file=sys.stderr)
+            sys.exit(1)
+            
         sys.exit(0)
-    
+
     # Check if this is an AI-only command that doesn't need method/endpoint
-    ai_only_command = (ML_AVAILABLE and 
-                      (hasattr(args, 'ai_status') and args.ai_status) or
-                      (hasattr(args, 'train_models') and args.train_models))
+    # This is no longer relevant as the training script is separate.
+    # ai_only_command = (ML_AVAILABLE and 
+    #                   (hasattr(args, 'ai_status') and args.ai_status) or
+    #                   (hasattr(args, 'train_models') and args.train_models))
     
-    # Validate required arguments for regular API requests
-    if not ai_only_command:
+    # If not an AI query, method and endpoint are required.
+    if not (ML_AVAILABLE and hasattr(args, 'ai_query') and args.ai_query):
         if not args.method:
-            print("Error: -m/--method is required for API requests", file=sys.stderr)
+            print("Error: -m/--method is required for non-AI API requests", file=sys.stderr)
             sys.exit(1)
         if not args.endpoint:
-            print("Error: -e/--endpoint is required for API requests", file=sys.stderr)
+            print("Error: -e/--endpoint is required for non-AI API requests", file=sys.stderr)
             sys.exit(1)
     
     # Load configuration
@@ -2192,9 +1628,9 @@ Host file format (INI):
     
     # Handle SSL warnings - re-enable them if explicitly requested
     if args.ssl_warnings:
+        # Reset the warning filters to their default state.
+        # This will undo the disable_warnings() call at the top of the script.
         warnings.resetwarnings()
-        # Re-enable urllib3 warnings
-        urllib3.warnings.simplefilter('default', urllib3.exceptions.InsecureRequestWarning)
     
     # Determine connection parameters (command line overrides config file)
     host = args.host or config.get('host') or config.get('ip')
@@ -2202,21 +1638,14 @@ Host file format (INI):
     password = args.password or config.get('password')
     apikey = args.apikey or config.get('apikey')
     
-    # For AI-only commands, we may not need actual FortiGate connection
-    if not ai_only_command:
-        if not host:
-            print("Error: FortiGate host/IP address is required", file=sys.stderr)
-            sys.exit(1)
-        
-        if not apikey and not password:
-            print("Error: Either API key or password is required", file=sys.stderr)
-            sys.exit(1)
-    else:
-        # For AI-only commands, provide dummy values if not specified
-        if not host:
-            host = "localhost"
-        if not apikey and not password:
-            apikey = "dummy"
+    # For AI queries, we might determine the host later, but for now, require it.
+    if not host:
+        print("Error: FortiGate host/IP address is required (-i, --host, or in config)", file=sys.stderr)
+        sys.exit(1)
+    
+    if not apikey and not password:
+        print("Error: Either API key or password is required", file=sys.stderr)
+        sys.exit(1)
     
     # Parse request data if provided
     request_data = None
@@ -2227,37 +1656,8 @@ Host file format (INI):
             print(f"Error parsing data: {e}", file=sys.stderr)
             sys.exit(1)
     
-    # Create client and execute request
+    # Create client
     try:
-        # Check for ML/AI features
-        enable_ai = False
-        if ML_AVAILABLE and hasattr(args, 'enable_ai') and args.enable_ai:
-            enable_ai = True
-        
-        # Handle AI-specific commands first
-        if ML_AVAILABLE and hasattr(args, 'ai_status') and args.ai_status:
-            client = FortiGateAPIClient(
-                host=host, username=username, password=password, apikey=apikey,
-                use_ssl=not args.no_ssl, verify_ssl=args.verify_ssl,
-                timeout=args.timeout, debug=args.debug, enable_ml=True
-            )
-            status = client.get_ml_status()
-            print("AI/ML Status:")
-            print(json.dumps(status, indent=2))
-            sys.exit(0)
-        
-        if ML_AVAILABLE and hasattr(args, 'train_models') and args.train_models:
-            client = FortiGateAPIClient(
-                host=host, username=username, password=password, apikey=apikey,
-                use_ssl=not args.no_ssl, verify_ssl=args.verify_ssl,
-                timeout=args.timeout, debug=args.debug, enable_ml=True
-            )
-            print("Training ML models...")
-            results = client.train_ml_models()
-            print("Training Results:")
-            print(json.dumps(results, indent=2, default=str))
-            sys.exit(0)
-        
         client = FortiGateAPIClient(
             host=host,
             username=username,
@@ -2266,89 +1666,78 @@ Host file format (INI):
             use_ssl=not args.no_ssl,
             verify_ssl=args.verify_ssl,
             timeout=args.timeout,
-            debug=args.debug,
-            enable_ml=enable_ai
+            debug=args.debug
         )
-        
-        # Execute request with or without AI processing
-        if enable_ai and hasattr(args, 'ai_query') and args.ai_query:
-            status_code, response = client.execute_request_with_ai(
-                method=args.method,
-                endpoint=args.endpoint,
-                data=request_data,
-                query_params=args.query,
-                user_query=args.ai_query,
-                ai_format=getattr(args, 'ai_format', None)
-            )
-        else:
-            status_code, response = client.execute_request(
-                method=args.method,
-                endpoint=args.endpoint,
-                data=request_data,
-                query_params=args.query
-            )
-        
-        # Collect training data if requested
-        if (ML_AVAILABLE and hasattr(args, 'collect_training_data') and 
-            args.collect_training_data and status_code == 200):
-            client.collect_training_data(args.endpoint, response)
-            if args.debug:
-                print("Training data collected for this request")
+
+        # AI-powered query processing
+        if ML_AVAILABLE and hasattr(args, 'ai_query') and args.ai_query:
+            assert classify_user_intent is not None
+            assert AIDataFormatter is not None
+            if not ML_AVAILABLE:
+                print("Error: AI/ML components not available. Cannot process AI query.")
+                print("Please ensure all dependencies in requirements.txt are installed and models are trained.")
+                # For debugging, print the original import error
+                if '_ml_import_error' in locals():
+                    print(f"Import Error: {_ml_import_error}")
+                sys.exit(1)
+            
+            print("🤖 Processing with AI...")
+            
+            # Step 1: Use enhanced ML to understand user intent
+            # The endpoint can be optionally provided to assist the classifier
+            intent = classify_user_intent(args.ai_query, endpoint=args.endpoint)
+            
+            print(f"   🧠 AI Intent Analysis:")
+            print(f"      Endpoint: {intent.endpoint} (conf: {intent.endpoint_confidence:.2f})")
+            print(f"      Format: {intent.format_type} (conf: {intent.format_confidence:.2f})")
+            print(f"      Fields: {intent.requested_fields if intent.requested_fields else 'auto-select'}")
+            print(f"      Filters: {intent.filter_conditions if intent.filter_conditions else 'none'}")
+
+            if not intent.endpoint or intent.endpoint == 'unknown':
+                print("\n❌ AI could not determine the API endpoint from your query.")
+                print("   Please be more specific, e.g., 'show firewall policies' or 'list interfaces'.")
+                sys.exit(1)
+
+            # Step 2: Perform the API call
+            print(f"\n📡 Calling API endpoint: {intent.endpoint}...")
+            # We fetch all data and let the formatter handle filtering client-side.
+            # This is because the new filter logic is more complex than simple key=value pairs
+            # that the FortiGate API filter parameter accepts. The AIDataFormatter can
+            # handle complex, nested filtering.
+            status_code, response = client.execute_request('get', intent.endpoint)
+            
+            if status_code != 200:
+                print(f"   API call failed with status {status_code}.")
+                print(json.dumps(response, indent=2, default=str))
+                sys.exit(1)
+
+            # Step 3: Use AI to format and display the output
+            print("🎨 Formatting response with AI...")
+            formatter = AIDataFormatter()
+            formatted_output = formatter.format_data(response, intent)
+            
+            print("\n" + "="*20 + " AI Formatted Output " + "="*20)
+            print(formatted_output)
+            print("="*62)
+            
+            sys.exit(0)
+
+        # Standard request processing
+        status_code, response = client.execute_request(
+            method=args.method,
+            endpoint=args.endpoint,
+            data=request_data,
+            query_params=args.query
+        )
         
         # Output results
         print(f"Status Code: {status_code}")
-        
-        # Handle AI-enhanced responses
-        if enable_ai and 'ai_processing' in response:
-            ai_info = response['ai_processing']
-            if 'display_optimization' in ai_info:
-                display_opt = ai_info['display_optimization']
-                print(f"AI Context: {display_opt.get('context', 'unknown')} (confidence: {display_opt.get('confidence', 0):.2f})")
-                
-                if display_opt.get('suggestions'):
-                    print("AI Suggestions:")
-                    for suggestion in display_opt['suggestions']:
-                        print(f"  • {suggestion}")
-                
-                # Use AI-processed data for display
-                if 'processed_data' in display_opt:
-                    processed_data = display_opt['processed_data']
-                    if 'data' in processed_data:
-                        response['results'] = processed_data['data']
-                    
-                    # Show applied filters
-                    if processed_data.get('applied_filters'):
-                        print("Applied Filters:")
-                        for filter_info in processed_data['applied_filters']:
-                            print(f"  • {filter_info}")
-                    
-                    print()  # Add spacing
-        
-        # Handle different output formats
-        
-        # Check if we have AI-formatted output and display it
-        if (enable_ai and 'ai_processing' in response and 
-            'ai_formatted_output' in response['ai_processing']):
-            print("🤖 AI-Formatted Output:")
-            print(response['ai_processing']['ai_formatted_output'])
-            return
         
         if args.format == 'table':
             # Parse table fields if provided
             custom_fields = None
             if args.table_fields:
                 custom_fields = [field.strip() for field in args.table_fields.split(',')]
-            
-            # Use AI-suggested fields if available and no custom fields specified
-            if (not custom_fields and enable_ai and 'ai_processing' in response and
-                'display_optimization' in response['ai_processing']):
-                display_opt = response['ai_processing']['display_optimization']
-                if 'display_config' in display_opt:
-                    suggested_fields = display_opt['display_config'].get('priority_fields', [])
-                    if suggested_fields:
-                        custom_fields = suggested_fields
-                        if args.debug:
-                            print(f"Using AI-suggested fields: {', '.join(custom_fields)}")
             
             # Format as table
             try:
@@ -2392,6 +1781,5 @@ Host file format (INI):
         print("\nOperation cancelled by user", file=sys.stderr)
         sys.exit(130)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

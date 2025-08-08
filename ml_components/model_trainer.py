@@ -19,6 +19,10 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.pipeline import Pipeline
+import pickle
 
 
 class MLModelTrainer:
@@ -50,9 +54,84 @@ class MLModelTrainer:
             'test_size': 0.2,
             'random_state': 42,
             'cv_folds': 5,
-            'min_samples_per_class': 5
+            'min_samples_per_class': 2
         }
-    
+
+    def train_models(self, training_data: Dict[str, Any], save_models: bool = True) -> Dict[str, Any]:
+        """
+        Train all models based on the robust natural language training data.
+        This includes:
+        - A TfidfVectorizer for converting queries into numerical features.
+        - A classifier for the 'endpoint'.
+        - A classifier for the 'category'.
+        - A classifier for the 'format'.
+        """
+        self.logger.info("🚀 Starting model training with robust data...")
+        
+        df = pd.DataFrame(training_data['examples'])
+        
+        # For simplicity, we'll treat fields and filters as NER problems to be handled by the intent classifier for now.
+        # Here we focus on classifying endpoint, category, and format from the query text.
+
+        X = df['query']
+        
+        results = {}
+        pipeline = None
+
+        # Train and save models for each target
+        for target in ['endpoint', 'category', 'format']:
+            self.logger.info(f"Training model for target: {target}")
+            y = df[target]
+
+            # Use LabelEncoder for the target variable
+            le = LabelEncoder()
+            y_encoded = le.fit_transform(y)
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y_encoded, test_size=self.config['test_size'], random_state=self.config['random_state'], stratify=y_encoded
+            )
+
+            pipeline = Pipeline([
+                ('tfidf', TfidfVectorizer(stop_words='english', ngram_range=(1, 2), max_df=0.95, min_df=2)),
+                ('clf', RandomForestClassifier(n_estimators=100, random_state=self.config['random_state']))
+            ])
+
+            pipeline.fit(X_train, y_train)
+
+            accuracy = pipeline.score(X_test, y_test)
+            self.logger.info(f"✅ Accuracy for {target} model: {accuracy:.4f}")
+            
+            report = classification_report(y_test, pipeline.predict(X_test), target_names=le.classes_, output_dict=True, zero_division=0)
+            
+            results[f'{target}_classifier'] = {
+                'accuracy': accuracy,
+                'classification_report': report
+            }
+
+            if save_models:
+                # Save the pipeline (vectorizer + classifier)
+                model_path = os.path.join(self.models_dir, f'{target}_model.pkl')
+                with open(model_path, 'wb') as f:
+                    pickle.dump(pipeline, f)
+                self.logger.info(f"✅ Saved {target} model to {model_path}")
+
+                # Save the label encoder
+                le_path = os.path.join(self.models_dir, f'{target}_label_encoder.pkl')
+                with open(le_path, 'wb') as f:
+                    pickle.dump(le, f)
+                self.logger.info(f"✅ Saved {target} label encoder to {le_path}")
+
+
+        # Save the main vectorizer (based on the last pipeline's tfidf) for general use
+        if save_models and pipeline:
+            vectorizer_path = os.path.join(self.models_dir, 'vectorizer.pkl')
+            with open(vectorizer_path, 'wb') as f:
+                pickle.dump(pipeline.named_steps['tfidf'], f)
+            self.logger.info(f"✅ Saved main TF-IDF vectorizer to {vectorizer_path}")
+
+        self.logger.info("✅ All models trained successfully!")
+        return results
+
     def create_training_data(self, api_responses: List[Dict[str, Any]], 
                            save_to_file: bool = True) -> Dict[str, Any]:
         """

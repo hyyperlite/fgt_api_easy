@@ -1,204 +1,103 @@
-# FortiGate API Generic Client - Project Summary
+# FortiGate API Generic Client with AI/ML - Project Summary
 
 ## Overview
-This project provides a comprehensive Python-based command-line interface for interacting with FortiGate devices using the pyfgt library. The application supports both API key and username/password authentication, configuration files, and all standard HTTP methods.
+This project provides a comprehensive Python-based command-line interface for interacting with FortiGate devices. It has been significantly enhanced with a powerful AI/ML pipeline to support natural language queries, intelligent data filtering, and dynamic output formatting. The core goal is to make interacting with the complex FortiGate API as simple as having a conversation.
 
 ## Project Structure
 
+The project is organized into core application logic and modular AI/ML components.
+
 ```
 fgt_api_generic/
-├── fgt_api_client.py       # Main application script
-├── fgt                     # Shell wrapper script for easier usage
-├── test_client.py          # Test suite for functionality validation
-├── examples.py             # Usage examples and demonstrations
+├── fgt_api_client.py       # Main application script with command-line parsing
+├── fgt                     # Shell wrapper for easier execution
+├── ml_components/          # All AI/ML related modules
+│   ├── __init__.py
+│   ├── user_intent.py      # Canonical UserIntent dataclass (CORE)
+│   ├── enhanced_intent_classifier.py # ML-based intent classification
+│   ├── ai_formatter.py     # AI-powered data formatter
+│   ├── model_trainer.py    # Script to train the classification models
+│   ├── generate_training_data.py # Script to create robust training data
+│   └── models/             # Directory for trained ML models (.pkl)
+├── ml_demo.py              # Script to demonstrate the new AI pipeline
+├── test_ai_features.py     # Comprehensive test suite for the AI pipeline
 ├── requirements.txt        # Python package dependencies
-├── Makefile               # Common operations automation
-├── README.md              # Comprehensive documentation
-├── config.ini.example     # Example INI configuration file
-├── config.json.example    # Example JSON configuration file
-└── __pycache__/           # Python bytecode cache
+├── README.md               # Comprehensive user documentation
+├── PROJECT_PLAN.md         # Detailed project plan and progress tracker
+└── ... (other config files and legacy scripts)
 ```
 
 ## Key Features
 
-### Authentication Methods
-- **API Key Authentication** (Recommended): More secure, no session management needed
-- **Username/Password Authentication**: Traditional login method with session management
+### Core Functionality
+- **Full REST API Support**: GET, POST, PUT, DELETE operations.
+- **Flexible Authentication**: API key or username/password.
+- **Configuration Management**: Supports INI and JSON config files.
 
-### Configuration Options
-- **Command-line arguments**: Direct specification of all parameters
-- **Configuration files**: Support for both INI and JSON formats
-- **Flexible parameter precedence**: Command-line overrides config file values
+### 🤖 AI/ML Capabilities (New & Enhanced)
+- **Natural Language Understanding**: A sophisticated pipeline understands complex user queries involving filtering, field selection, and formatting.
+- **Interactive Shell**: The primary interface (`./fgt --interactive`) allows for conversational interaction with the FortiGate API.
+- **Intelligent Data Formatting**: Automatically formats data into tables, lists, CSV, JSON, and generates PDF reports based on user intent.
+- **Dynamic Filtering**: Applies filters based on natural language (e.g., "show enabled policies").
+- **Smart Field Selection**: Intelligently selects relevant fields to display or allows user to specify them (e.g., "show me just the name and status").
+- **Local Processing**: All AI/ML processing is done locally; no data is sent to external services.
 
-### HTTP Methods Supported
-- **GET**: Retrieve configuration and monitoring data
-- **POST**: Create new objects
-- **PUT**: Update existing objects  
-- **DELETE**: Remove objects
+## Usage
 
-### Advanced Features
-- **Query Parameters**: Support for filtering, formatting, VDOM selection
-- **JSON Data Input**: Structured data for POST/PUT operations
-- **Multiple Output Formats**: JSON, pretty JSON, and table formats
-- **Table Output**: Clean tabular display with auto-field detection for common objects
-- **Customizable Tables**: Custom field selection and width control
-- **Clean Output**: SSL warnings suppressed by default for better user experience
-- **Comprehensive Error Handling**: Specific exceptions for different error types
-- **Debug Mode**: Detailed logging for troubleshooting
-- **SSL Configuration**: Options for SSL usage and certificate verification
+The recommended way to use the application is through the interactive shell.
 
-## Usage Examples
-
-### Basic Usage
+### Interactive Mode
 ```bash
-# Get all firewall address objects
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
+./fgt --interactive -c config.ini
+```
+**Example Session:**
+```
+fgt> show all firewall policies as a table
+... table output ...
 
-# Create a new address object
-./fgt -i 192.168.1.99 -k your_api_key -m post -e /cmdb/firewall/address \
-  -d '{"name": "test_host", "subnet": "10.1.1.1/32"}'
+fgt> list enabled policies, just the name and status
+... list output ...
 
-# Use configuration file
-./fgt -c config.ini -m get -e /cmdb/firewall/address
+fgt> generate a pdf report of the routing table
+... PDF generated in /tmp ...
 ```
 
-### Advanced Usage
+### Command-Line (for scripting)
 ```bash
-# Get filtered results with specific formatting
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address \
-  -q 'vdom=root' -q 'format=name' -q 'filter=name==test_object'
+# Use the AI query engine from the command line
+./fgt --ai-query "show enabled policies as a csv" -c config.ini -e /cmdb/firewall/policy
 
-# Debug mode with SSL options
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /monitor/system/status \
-  --debug --verify-ssl --timeout 60
-
-# Disable pretty printing for compact output  
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --format json
-
-# Enable SSL warnings for security debugging
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --ssl-warnings
-
-# Table format for better readability
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --format table
-
-# Table format with specific fields
-./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --format table --table-fields policyid,name,action,status
+# Perform a standard API call without AI
+./fgt -c config.ini -m post -e /cmdb/firewall/address -d '{"name": "new_host"}'
 ```
 
-## Installation and Setup
+## AI/ML Pipeline
 
-1. **Install Dependencies**:
-   ```bash
-   make install
-   # OR
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
-   ```
-
-2. **Run Tests**:
-   ```bash
-   make test
-   # OR
-   python3 test_client.py
-   ```
-
-3. **View Examples**:
-   ```bash
-   make examples
-   # OR
-   python3 examples.py
-   ```
-
-## Configuration Files
-
-### INI Format
-```ini
-[fortigate]
-host = 192.168.1.99
-apikey = your_api_key_here
-username = admin
-debug = false
-```
-
-### JSON Format
-```json
-{
-  "fortigate": {
-    "host": "192.168.1.99",
-    "apikey": "your_api_key_here",
-    "username": "admin",
-    "debug": false
-  }
-}
-```
-
-## Common FortiGate API Endpoints
-
-### Configuration (CMDB)
-- `/cmdb/firewall/address` - Address objects
-- `/cmdb/firewall/addrgrp` - Address groups
-- `/cmdb/firewall/policy` - Firewall policies
-- `/cmdb/system/interface` - Network interfaces
-- `/cmdb/router/static` - Static routes
-
-### Monitoring
-- `/monitor/system/status` - System status
-- `/monitor/system/resource/usage` - Resource usage
-- `/monitor/firewall/session` - Active sessions
-- `/monitor/router/ipv4` - Routing table
-
-## Error Handling
-
-The application provides comprehensive error handling with specific exit codes:
-- **0**: Success
-- **1**: Configuration/validation errors
-- **2**: HTTP errors (4xx/5xx)
-- **130**: User cancellation (Ctrl+C)
-
-## Security Considerations
-
-1. **Use API Keys**: Preferred over username/password for better security
-2. **Protect Configuration Files**: Use appropriate file permissions (600)
-3. **SSL Verification**: Consider using `--verify-ssl` in production
-4. **SSL Warnings**: Disabled by default for clean output; use `--ssl-warnings` for security debugging
-5. **Credential Management**: Never hardcode credentials in scripts
+1.  **Input**: User enters a natural language query (e.g., "list enabled policies as a csv").
+2.  **Intent Classification (`enhanced_intent_classifier.py`)**:
+    -   Trained ML models (or fallback regex) parse the query to determine the user's intent.
+    -   This produces a `UserIntent` object containing the desired format, filters, and fields.
+3.  **Data Fetching (`fgt_api_client.py`)**: The client makes the necessary API call to the FortiGate device.
+4.  **Intelligent Formatting (`ai_formatter.py`)**:
+    -   The formatter takes the raw API data and the `UserIntent` object.
+    -   It first applies any requested filters.
+    -   Then, it formats the data into the desired output (table, list, CSV, PDF, etc.), selecting the appropriate fields.
+5.  **Output**: The final, formatted data is displayed to the user.
 
 ## Testing and Validation
 
-The project includes comprehensive testing:
-- **Unit Tests**: Configuration parsing, data validation, client creation
-- **Integration Examples**: Real-world usage patterns
-- **Error Scenario Testing**: Invalid inputs and network failures
+The AI/ML pipeline is validated by a comprehensive test suite.
 
-## Troubleshooting
+-   **`test_ai_features.py`**: Contains unit and integration tests for the entire pipeline, ensuring that intent classification, filtering, and formatting work correctly.
+-   **`ml_demo.py`**: Provides a live demonstration of the AI capabilities with sample data and queries.
 
-### Common Issues
-1. **Import Errors**: Ensure pyfgt is installed correctly
-2. **Connection Timeouts**: Check network connectivity and firewall rules
-3. **Authentication Failures**: Verify API key or credentials
-4. **SSL Errors**: Use `--no-ssl` for HTTP or `--verify-ssl` for proper certificates
-
-### Debug Mode
-Use `--debug` flag for detailed troubleshooting information including:
-- HTTP request/response details
-- Connection information
-- API call traces
+To run the tests:
+```bash
+python3 -m unittest test_ai_features.py
+```
 
 ## Future Enhancements
-
-Potential improvements could include:
-- Interactive mode for multiple operations
-- Bulk operations from CSV/JSON files
-- Output formatting options (CSV, XML)
-- Configuration backup/restore utilities
-- Integration with configuration management tools
-
-## Dependencies
-
-- **Python 3.6+**
-- **pyfgt**: FortiGate API library
-- **requests**: HTTP library (dependency of pyfgt)
-- **configparser**: Configuration file parsing (built-in)
-- **argparse**: Command-line argument parsing (built-in)
-- **json**: JSON data handling (built-in)
-
-This project provides a robust, flexible, and user-friendly interface for FortiGate API operations, suitable for both interactive use and automation scripts.
+-   Expand training data to cover more endpoints and query variations.
+-   Introduce stateful awareness in interactive mode (e.g., remembering the last endpoint used).
+-   Add support for more complex operations like data comparison or trend analysis.
+-   Integrate with configuration backup and restore workflows.
