@@ -2,29 +2,7 @@
 """
 Enhanced ML-Based Intent Classifier for Natural Language Processing
 
-This m        # Fallback patterns for when ML is not available
-        self.fallback_patterns = {
-            'format': {
-                'csv': [r'\bcsv\b', r'\bcomma.separated\b', r'\bexport.*csv\b'],
-                'json': [r'\bjson\b', r'\bjavascript.*object\b', r'\bexport.*json\b'],
-                'html': [r'\bhtml\b', r'\bweb.*page\b', r'\bhtml.*table\b'],
-                'table': [r'\btable\b', r'\btabular\b', r'\bput.*table\b', r'\bin.*table.*format\b'],
-                'summary': [r'\bsummar[yi]\b', r'\boverview\b']
-            },
-            'fields': [
-                r'\b(?:only|just|show|display)\s+(?:me\s+)?(?:the\s+)?((?:\w+(?:\s+and\s+|\s*,\s*)?)+?)(?:\s+(?:field|column|attribute)s?)?\s*(?:for|from|$)',
-                r'\bfields?\s+((?:\w+(?:\s+and\s+|\s*,\s*)?)+)\b',
-                r'\bcolumns?\s+((?:\w+(?:\s+and\s+|\s*,\s*)?)+)\b',
-                r'\bshow\s+(?:me\s+)?(?:just\s+|only\s+)?((?:\w+(?:\s+and\s+|\s*,\s*)?)+)(?:\s+for|\s+from|\s*$)'
-            ],
-            'filters': [
-                r'\b(?:where|with|having)\s+(.*?)(?:\s+(?:from|for)|\s*$)',
-                r'\bfilter(?:ed)?\s+(?:by\s+)?(.*?)(?:\s+(?:from|for)|\s*$)',
-                r'\bcontain(?:ing|s)\s+(.*?)(?:\s+(?:from|for)|\s*$)',
-                r'\bshow\s+(?:only\s+)?(enabled|disabled|active|inactive)(?:\s+|$)',
-                r'\b(enabled|disabled|active|inactive)\s+(?:only|policies|interfaces|connections)(?:\s+|$)'
-            ]
-        }earning models trained on comprehensive natural language
+This module uses machine learning models trained on comprehensive natural language
 data to understand user intent for formatting, field selection, and filtering.
 Replaces rigid regex patterns with robust ML classification.
 """
@@ -70,7 +48,7 @@ class UserIntent:
     requested_fields: List[str]  # specific fields user wants to see
     field_confidence: float
     
-    filter_conditions: List[str]  # filtering criteria
+    filter_conditions: List[Dict[str, Any]]  # Structured filtering criteria
     filter_confidence: float
     
     output_style: str  # brief, detailed, compact, etc.
@@ -121,25 +99,27 @@ class EnhancedMLIntentClassifier:
         # Load models if available
         self._load_trained_models()
     
-    def _build_fallback_patterns(self) -> Dict[str, List[str]]:
+    def _build_fallback_patterns(self) -> Dict[str, Any]:
         """Build fallback patterns for when ML models aren't available"""
         return {
             'format': {
                 'csv': [r'\bcsv\b', r'\bcomma.separated\b'],
                 'json': [r'\bjson\b', r'\bjavascript.*object\b'],
                 'html': [r'\bhtml\b', r'\bweb.*page\b'],
+                'pdf': [r'\bpdf\b', r'\bdocument\b'],
                 'table': [r'\btable\b', r'\btabular\b', r'\bput.*in.*table\b', r'\bin.*table.*format\b'],
                 'summary': [r'\bsummar[yi]\b', r'\boverview\b']
             },
             'fields': [
-                r'\b(?:only|just|show|display)\s+(?:me\s+)?(?:the\s+)?([\w\s,]+?)(?:\s+(?:field|column|attribute)s?)?\b',
-                r'\bfields?\s+([\w\s,]+)\b',
-                r'\bcolumns?\s+([\w\s,]+)\b'
+                r'\b(?:only|just|show|display)\s+(?:me\s+)?(?:the\s+)?((?:[\w\-]+(?:(?:\s+and\s+|\s*,\s*)[\w\-]+)*))(?:\s+(?:field|column|attribute)s?)?',
+                r'\bfields?\s+((?:[\w\-]+(?:(?:\s+and\s+|\s*,\s*)[\w\-]+)*))\b',
+                r'\bcolumns?\s+((?:[\w\-]+(?:(?:\s+and\s+|\s*,\s*)[\w\-]+)*))\b'
             ],
             'filters': [
-                r'\b(?:where|with|having)\s+(.*?)(?:\s+(?:from|for)|\s*$)',
-                r'\bfilter(?:ed)?\s+(?:by\s+)?(.*?)(?:\s+(?:from|for)|\s*$)',
-                r'\bcontain(?:ing|s)\s+(.*?)(?:\s+(?:from|for)|\s*$)'
+                r'\b(?:where|with|for|having)\s+(.*?)(?:\s+(?:and|or|sort|order|limit)|$)',
+                r'\bfilter(?:ed)?\s+(?:by\s+)?(.*?)(?:\s+(?:and|or|sort|order|limit)|$)',
+                r'\bcontain(?:ing|s)\s+(.*?)(?:\s+(?:and|or|sort|order|limit)|$)',
+                r'\b(enabled|disabled|active|inactive)\s+(?:policies|interfaces|users|rules)\b'
             ]
         }
     
@@ -159,7 +139,7 @@ class EnhancedMLIntentClassifier:
             training_data = json.load(f)
         
         examples = training_data['examples']
-        print(f"   📊 Loading {len(examples)} training examples...")
+        print(f"   📊 Loading {len(examples)} training examples from {os.path.basename(training_data_path)}...")
         
         results = {}
         
@@ -187,9 +167,9 @@ class EnhancedMLIntentClassifier:
     def _train_format_classifier(self, examples: List[Dict]) -> Dict[str, Any]:
         """Train the format classification model"""
         # Extract format examples
-        format_examples = [ex for ex in examples if 'format' in ex and ex.get('intent_type') in ['format', 'combined']]
+        format_examples = [ex for ex in examples if 'format' in ex]
         
-        if len(format_examples) < 50:
+        if len(format_examples) < 20:
             return {'status': 'insufficient_data', 'count': len(format_examples)}
         
         # Prepare training data
@@ -206,7 +186,7 @@ class EnhancedMLIntentClassifier:
         
         self.format_classifier = Pipeline([
             ('tfidf', self.format_vectorizer),
-            ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
+            ('classifier', RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced'))
         ])
         
         # Split and train
@@ -230,41 +210,21 @@ class EnhancedMLIntentClassifier:
     
     def _train_field_extractor(self, examples: List[Dict]) -> Dict[str, Any]:
         """Train the field extraction model"""
-        # Extract field examples and also add some negative examples
-        field_examples = [ex for ex in examples if 'requested_fields' in ex and ex.get('intent_type') in ['fields', 'combined']]
+        # For field extraction, we use a binary classifier to detect if fields are requested.
+        texts = [ex['text'] for ex in examples]
+        labels = [1 if ex.get('requested_fields') else 0 for ex in examples]
         
-        # Add some negative examples (format/filter only examples)
-        negative_examples = [ex for ex in examples if ex.get('intent_type') in ['format', 'filter'] and 'requested_fields' not in ex][:len(field_examples)//2]
-        
-        all_examples = field_examples + negative_examples
-        
-        if len(all_examples) < 50:
-            return {'status': 'insufficient_data', 'count': len(all_examples)}
-        
-        # For field extraction, we'll use a hybrid approach:
-        # ML to detect if fields are requested, then extract using patterns
-        texts = [ex['text'] for ex in all_examples]
-        # Binary classification: contains field request or not
-        labels = [1 if ex.get('requested_fields') else 0 for ex in all_examples]
+        if len(texts) < 20:
+            return {'status': 'insufficient_data', 'count': len(texts)}
         
         self.field_extractor = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=500, ngram_range=(1, 2))),
-            ('classifier', LogisticRegression(random_state=42))
+            ('tfidf', TfidfVectorizer(max_features=500, ngram_range=(1, 2), stop_words='english')),
+            ('classifier', LogisticRegression(random_state=42, class_weight='balanced'))
         ])
         
         # Split and train
-        if len(set(labels)) < 2:
-            # All examples have the same label, create a simple classifier
-            return {
-                'status': 'single_class',
-                'examples_count': len(all_examples),
-                'class_label': labels[0] if labels else 0,
-                'train_accuracy': 1.0,
-                'test_accuracy': 1.0
-            }
-            
         X_train, X_test, y_train, y_test = train_test_split(
-            texts, labels, test_size=0.2, random_state=42
+            texts, labels, test_size=0.2, random_state=42, stratify=labels
         )
         
         self.field_extractor.fit(X_train, y_train)
@@ -274,48 +234,29 @@ class EnhancedMLIntentClassifier:
         
         return {
             'status': 'trained',
-            'examples_count': len(all_examples),
-            'positive_examples': len(field_examples),
-            'negative_examples': len(negative_examples),
+            'examples_count': len(texts),
+            'positive_examples': sum(labels),
             'train_accuracy': train_score,
             'test_accuracy': test_score
         }
     
     def _train_filter_extractor(self, examples: List[Dict]) -> Dict[str, Any]:
         """Train the filter extraction model"""
-        # Extract filter examples and add negative examples
-        filter_examples = [ex for ex in examples if 'filter_condition' in ex and ex.get('intent_type') in ['filter', 'combined']]
-        
-        # Add some negative examples (format/field only examples)
-        negative_examples = [ex for ex in examples if ex.get('intent_type') in ['format', 'fields'] and 'filter_condition' not in ex][:len(filter_examples)//2]
-        
-        all_examples = filter_examples + negative_examples
-        
-        if len(all_examples) < 50:
-            return {'status': 'insufficient_data', 'count': len(all_examples)}
-        
         # Binary classification: contains filter request or not
-        texts = [ex['text'] for ex in all_examples]
-        labels = [1 if ex.get('filter_condition') else 0 for ex in all_examples]
+        texts = [ex['text'] for ex in examples]
+        labels = [1 if ex.get('filter_condition') else 0 for ex in examples]
+        
+        if len(texts) < 20:
+            return {'status': 'insufficient_data', 'count': len(texts)}
         
         self.filter_extractor = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=500, ngram_range=(1, 2))),
-            ('classifier', LogisticRegression(random_state=42))
+            ('tfidf', TfidfVectorizer(max_features=500, ngram_range=(1, 2), stop_words='english')),
+            ('classifier', LogisticRegression(random_state=42, class_weight='balanced'))
         ])
         
         # Split and train
-        if len(set(labels)) < 2:
-            # All examples have the same label, create a simple classifier
-            return {
-                'status': 'single_class',
-                'examples_count': len(all_examples),
-                'class_label': labels[0] if labels else 0,
-                'train_accuracy': 1.0,
-                'test_accuracy': 1.0
-            }
-            
         X_train, X_test, y_train, y_test = train_test_split(
-            texts, labels, test_size=0.2, random_state=42
+            texts, labels, test_size=0.2, random_state=42, stratify=labels
         )
         
         self.filter_extractor.fit(X_train, y_train)
@@ -325,9 +266,8 @@ class EnhancedMLIntentClassifier:
         
         return {
             'status': 'trained',
-            'examples_count': len(all_examples),
-            'positive_examples': len(filter_examples),
-            'negative_examples': len(negative_examples),
+            'examples_count': len(texts),
+            'positive_examples': sum(labels),
             'train_accuracy': train_score,
             'test_accuracy': test_score
         }
@@ -480,7 +420,7 @@ class EnhancedMLIntentClassifier:
             # Check if query contains field request
             has_fields_prob = self.field_extractor.predict_proba([user_query])[0][1]
             
-            if has_fields_prob > 0.5:
+            if has_fields_prob > 0.6: # Higher threshold for more confidence
                 # Extract fields using pattern matching (hybrid approach)
                 return self._extract_fields_from_query(user_query, endpoint, has_fields_prob)
             else:
@@ -498,33 +438,23 @@ class EnhancedMLIntentClassifier:
         """Extract specific field requests from query"""
         requested_fields = []
         
-        # Try to extract specific field requests using improved patterns
         for pattern in self.fallback_patterns['fields']:
             match = re.search(pattern, user_query, re.IGNORECASE)
             if match:
                 fields_text = match.group(1)
-                # Parse field names more carefully
-                fields = []
-                
-                # Handle "and" and comma separation
-                field_parts = re.split(r'\s+and\s+|\s*,\s*', fields_text)
-                for part in field_parts:
-                    part = part.strip()
-                    # Filter out common non-field words
-                    if part and part not in ['from', 'for', 'the', 'and', 'or', 'in', 'on', 'at', 'to', 'with', 'just', 'only', 'show', 'display', 'me']:
-                        # Check if it's a reasonable field name (alphanumeric, dash, underscore)
-                        if re.match(r'^[\w\-]+$', part):
-                            fields.append(part)
-                
+                # Parse field names, handling commas and 'and'
+                fields = [f.strip() for f in re.split(r'\s+and\s+|\s*,\s*', fields_text) if f.strip()]
+                # Filter out common non-field words
+                fields = [f for f in fields if f not in ['the', 'me', 'from', 'for']]
                 if fields:
                     requested_fields.extend(fields)
                     break
         
         if requested_fields:
             return {
-                'fields': requested_fields,
+                'fields': list(set(requested_fields)), # Remove duplicates
                 'confidence': confidence,
-                'method': 'improved_pattern_extraction'
+                'method': 'ml_triggered_pattern_extraction'
             }
         else:
             return self._get_intelligent_field_defaults(user_query, endpoint, confidence * 0.7)
@@ -560,10 +490,10 @@ class EnhancedMLIntentClassifier:
         try:
             has_filter_prob = self.filter_extractor.predict_proba([user_query])[0][1]
             
-            if has_filter_prob > 0.5:
+            if has_filter_prob > 0.6: # Higher threshold
                 return self._extract_filters_from_query(user_query, has_filter_prob)
             else:
-                return {'filters': [], 'confidence': 0.2, 'method': 'no_filters_detected'}
+                return {'filters': [], 'confidence': 1.0 - has_filter_prob, 'method': 'no_filters_detected'}
                 
         except Exception as e:
             return self._classify_filters_fallback(user_query)
@@ -571,23 +501,72 @@ class EnhancedMLIntentClassifier:
     def _classify_filters_fallback(self, user_query: str) -> Dict[str, Any]:
         """Fallback filter classification using patterns"""
         return self._extract_filters_from_query(user_query, 0.6)
-    
+
+    def _parse_filter_string(self, filter_text: str) -> Optional[Dict[str, str]]:
+        """Parse a single filter string into a structured dictionary."""
+        # Pattern: <field> <operator> <value>
+        # Handles quoted and unquoted values
+        pattern = re.compile(
+            r"([\w\-]+)\s+(is\s+not|is|not\s+equal|equals|contains|starts\s+with|ends\s+with|>=|<=|>|<|=)\s+(['\"]?)(.*?)\3\s*$",
+            re.IGNORECASE
+        )
+        match = pattern.match(filter_text)
+        if match:
+            field, operator, _, value = match.groups()
+            # Normalize operator
+            op_map = {
+                "is": "==",
+                "is not": "!=",
+                "equals": "==",
+                "not equal": "!=",
+                "contains": "contains",
+                "starts with": "startswith",
+                "ends with": "endswith",
+                "=": "==",
+            }
+            normalized_operator = op_map.get(operator.strip().lower(), operator.strip())
+            
+            return {
+                "field": field.strip(),
+                "operator": normalized_operator,
+                "value": value.strip()
+            }
+        
+        # Handle simple boolean cases like "status enabled" or "enabled policies"
+        parts = filter_text.split()
+        if len(parts) == 2:
+            # Could be "status enabled" or "enabled policies"
+            # If the second part is a common status, assume field-value pair
+            if parts[1] in ['enabled', 'disabled', 'active', 'inactive', 'up', 'down']:
+                 return {"field": parts[0], "operator": "==", "value": parts[1]}
+            # If the first part is a status, assume it's a filter on that status
+            if parts[0] in ['enabled', 'disabled', 'active', 'inactive', 'up', 'down']:
+                 return {"field": "status", "operator": "==", "value": parts[0]}
+
+        return None
+
     def _extract_filters_from_query(self, user_query: str, confidence: float = 0.7) -> Dict[str, Any]:
-        """Extract filter conditions from query"""
+        """Extract and parse filter conditions from the user query."""
         filters = []
         
         for pattern in self.fallback_patterns['filters']:
-            match = re.search(pattern, user_query, re.IGNORECASE)
-            if match:
+            for match in re.finditer(pattern, user_query, re.IGNORECASE):
                 filter_text = match.group(1).strip()
-                if filter_text and len(filter_text) > 2:
-                    filters.append(filter_text)
-                    break
+                if filter_text:
+                    parsed_filter = self._parse_filter_string(filter_text)
+                    if parsed_filter:
+                        filters.append(parsed_filter)
         
+        # Handle cases like "show enabled policies" where the filter is adjectival
+        adj_pattern = r'\b(enabled|disabled|active|inactive|up|down)\b'
+        adj_match = re.search(adj_pattern, user_query, re.IGNORECASE)
+        if adj_match and not any(f['field'] == 'status' for f in filters):
+             filters.append({"field": "status", "operator": "==", "value": adj_match.group(1)})
+
         return {
             'filters': filters,
             'confidence': confidence if filters else 0.1,
-            'method': 'pattern_extraction'
+            'method': 'ml_triggered_structured_parsing'
         }
     
     def _classify_style(self, query_lower: str) -> Dict[str, str]:
@@ -637,55 +616,47 @@ if __name__ == "__main__":
     # First try to train models
     print("📚 Training models with robust training data...")
     train_results = train_enhanced_models()
-    print(f"Training results: {train_results}")
+    print(f"Training results: {json.dumps(train_results, indent=2)}")
     
     # Test queries with many variations
     test_queries = [
         # Format variations
-        ("show me firewall policies and format as csv", "/cmdb/firewall/policy"),
+        ("show me firewall policies and format as pdf", "/cmdb/firewall/policy"),
         ("display interfaces in json format", "/cmdb/system/interface"),
-        ("give me the policies and export to csv", "/cmdb/firewall/policy"),
-        ("show interfaces and make it html", "/cmdb/system/interface"),
-        ("put the data in table format", None),
-        ("convert to json", None),
-        ("I want csv output", None),
         
         # Field variations  
         ("show me just name and action for policies", "/cmdb/firewall/policy"),
-        ("display only the status and ip fields", "/cmdb/system/interface"),
-        ("I need the name, remote-gw, and status attributes", "/cmdb/vpn/ipsec/phase1-interface"),
-        ("give me name and action only", "/cmdb/firewall/policy"),
-        ("just show the interface names", "/cmdb/system/interface"),
+        ("display only the status and ip fields for interfaces", "/cmdb/system/interface"),
         
         # Filter variations
         ("show only enabled policies", "/cmdb/firewall/policy"),
         ("display interfaces where status is up", "/cmdb/system/interface"),
-        ("get policies that have action allow", "/cmdb/firewall/policy"),
-        ("filter for active connections", "/cmdb/vpn/ipsec/phase1-interface"),
+        ("get policies with name contains 'guest'", "/cmdb/firewall/policy"),
         
         # Combined variations
         ("show enabled policies with name and action in csv format", "/cmdb/firewall/policy"),
-        ("display active interfaces and format as json", "/cmdb/system/interface"),
+        ("display active interfaces where type is vlan and format as json", "/cmdb/system/interface"),
         ("give me just the names of allowed policies as a table", "/cmdb/firewall/policy")
     ]
     
     classifier = get_enhanced_intent_classifier()
     
     for query, endpoint in test_queries:
-        print(f"\n🔤 Query: {query}")
-        print(f"📍 Endpoint: {endpoint}")
+        print(f"\n🔤 Query: '{query}'")
+        if endpoint:
+            print(f"📍 Endpoint: {endpoint}")
         print("-" * 60)
         
         intent = classifier.classify_intent(query, endpoint)
         
-        print(f"🎯 Format: {intent.format_type} (confidence: {intent.format_confidence:.2f})")
-        print(f"📋 Fields: {intent.requested_fields} (confidence: {intent.field_confidence:.2f})")
-        print(f"🔍 Filters: {intent.filter_conditions} (confidence: {intent.filter_confidence:.2f})")
-        print(f"🎨 Style: {intent.output_style}")
+        print(f"  - Format: {intent.format_type} (confidence: {intent.format_confidence:.2f})")
+        print(f"  - Fields: {intent.requested_fields} (confidence: {intent.field_confidence:.2f})")
+        print(f"  - Filters: {intent.filter_conditions} (confidence: {intent.filter_confidence:.2f})")
+        print(f"  - Style: {intent.output_style}")
         
         # Show method used
         methods = []
         for key, classification in intent.classifications.items():
             if 'method' in classification:
                 methods.append(f"{key}:{classification['method']}")
-        print(f"🔧 Methods: {', '.join(methods)}")
+        print(f"  - Methods: {', '.join(methods)}")
