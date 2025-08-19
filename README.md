@@ -36,11 +36,6 @@ Using a virtual environment is the recommended approach as it isolates the proje
    ```
 3. Install the required packages:
    ```bash
-   pip install git+https://github.com/p4r4n0y1ng/pyfgt.git requests tabulate
-   ```
-   
-   Or use the requirements file:
-   ```bash
    pip install -r requirements.txt
    ```
 
@@ -91,7 +86,7 @@ The application accepts various command-line arguments for configuration and API
 - `--ssl-warnings`: Enable SSL warnings (disabled by default for cleaner output)
 - `--timeout`: Request timeout in seconds (default: 300)
 - `--debug`: Enable debug mode
-- `--format`: Output format - json, pretty, or table (default: table)
+- `--format`: Output format - json, pretty, or table (default: json)
 
 #### Table Output Options
 - `--table-fields`: Comma-separated list of fields to include in table output
@@ -105,7 +100,7 @@ The application accepts various command-line arguments for configuration and API
 # Get all firewall address objects
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
 
-# Get address objects with filtering and formatting (table format is default)
+# Get address objects with filtering and formatting (json format is default)
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address -q 'vdom=root' -q 'format=name' -q 'filter=name==test_object'
 
 # Create a new address object
@@ -120,7 +115,7 @@ python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m put -e /cmdb/firewa
 # Delete an address object
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m delete -e /cmdb/firewall/address/test_host
 
-# Get address objects (default table format)
+# Get address objects (default json format)
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
 
 # Get address objects in table format with specific fields
@@ -138,7 +133,7 @@ python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /monitor/net
 
 #### Table Output Examples
 
-**Note: Table format is now the default output format for better readability of FortiGate API responses.**
+**Note: JSON format is now the default output format.**
 
 The table output format provides a clean, readable view of FortiGate API responses. Here are some examples:
 
@@ -320,9 +315,9 @@ If you're upgrading from a previous version that used `--pretty` and `--no-prett
 
 - Replace `--pretty` with `--format pretty` 
 - Replace `--no-pretty` with `--format json` 
-- Note: The default format is now table instead of pretty JSON
+- Note: The default format is now json instead of table.
 
-The old flags have been removed in favor of the cleaner `--format` option. Table format is now the default for better readability of FortiGate API responses.
+The old flags have been removed in favor of the cleaner `--format` option. JSON format is now the default.
 
 ## Requirements
 
