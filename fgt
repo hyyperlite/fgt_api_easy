@@ -10,5 +10,19 @@ if [[ ! -f "$PYTHON_SCRIPT" ]]; then
     exit 1
 fi
 
-# Pass all arguments to the Python script
-python3 "$PYTHON_SCRIPT" "$@"
+# Pass all arguments to the Python script, adding --format pretty if not present
+ARGS=("$@")
+FORMAT_SET=false
+for arg in "${ARGS[@]}"; do
+  if [[ "$arg" == "--format" ]] || [[ "$arg" == --format=* ]]; then
+    FORMAT_SET=true
+    break
+  fi
+done
+
+if ! $FORMAT_SET; then
+  ARGS+=(--format pretty)
+fi
+
+python3 "$PYTHON_SCRIPT" "${ARGS[@]}"
+

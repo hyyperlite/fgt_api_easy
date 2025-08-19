@@ -25,7 +25,7 @@ try:
     from pyFGT.fortigate import FGTBaseException, FGTValidSessionException, FGTValueError
     from pyFGT.fortigate import FGTResponseNotFormedCorrect, FGTConnectionError, FGTConnectTimeout
 except ImportError:
-    print("Error: pyfgt package not found. Please install it using: pip install git+https://github.com/p4r4n0y1ng/pyfgt.git")
+    print("Error: pyfgt package not found. Please install it using: pip install pyfgt")
     sys.exit(1)
 
 try:
@@ -1798,8 +1798,8 @@ Configuration file format (JSON):
                           help='Request timeout in seconds (default: 300)')
     opt_group.add_argument('--debug', action='store_true',
                           help='Enable debug mode')
-    opt_group.add_argument('--format', choices=['json', 'pretty', 'table'], default='table',
-                          help='Output format (default: table)')
+    opt_group.add_argument('--format', choices=['json', 'pretty', 'table'], default='json',
+                          help='Output format (default: json)')
     
     # Table-specific options
     table_group = parser.add_argument_group('Table Options')
