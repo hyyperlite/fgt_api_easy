@@ -195,14 +195,6 @@ python3 fgt_api_client.py -c config.ini -m get -e /cmdb/firewall/address
 python3 fgt_api_client.py -c config.ini -m get -e /cmdb/firewall/address --format json
 ```
 
-#### Using Username/Password
-```bash
-python3 fgt_api_client.py -i 192.168.1.99 -u admin -p password123 -m get -e /cmdb/firewall/address
-
-# Enable SSL warnings for security debugging
-python3 fgt_api_client.py -i 192.168.1.99 -u admin -p password123 -m get -e /cmdb/firewall/address --ssl-warnings
-```
-
 #### System Information Examples
 ```bash
 # Get system status
@@ -224,9 +216,6 @@ The application supports both INI and JSON configuration file formats.
 [fortigate]
 host = 192.168.1.99
 apikey = your_api_key_here
-# Alternative: use username/password instead of API key
-# username = admin
-# password = your_password_here
 
 # Optional settings
 # use_ssl = true
