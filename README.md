@@ -93,6 +93,10 @@ The application accepts various command-line arguments for configuration and API
 - `--table-max-width`: Maximum width for table cell content (default: 50)
 - `--table-max-fields`: Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)
 
+### Shortcut Script
+
+The fgt_api_client.py is the main application and can be executed directly.  However, to simplify usage when using directly from the CLI a shortcut bash script "fmg" is also included.  This script simply executes fmg_api_client.py but with a shoter name and also defaults to using the output format JSON pretty which is more human readable than the default JSON format the fmg_api_client.py defaults to.  It is really just to shorten the command but has same results as you could just specify --format {json|pretty|table} in either case.
+
 ### Examples
 
 #### Using API Key (Recommended)
@@ -110,25 +114,25 @@ python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m post -e /cmdb/firew
 python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m post -e /cmdb/firewall/addrgrp -d '{"name": "test_group", "member": [{"name": "test_host"}]}'
 
 # Update an existing address object
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m put -e /cmdb/firewall/address/test_host -d '{"subnet": "10.1.1.2/32"}'
+./fgt -i 192.168.1.99 -k your_api_key -m put -e /cmdb/firewall/address/test_host -d '{"subnet": "10.1.1.2/32"}'
 
 # Delete an address object
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m delete -e /cmdb/firewall/address/test_host
+./fgt -i 192.168.1.99 -k your_api_key -m delete -e /cmdb/firewall/address/test_host
 
 # Get address objects (default json format)
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address
 
 # Get address objects in table format with specific fields
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --table-fields name,subnet,type,comment
+./ft -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/address --table-fields name,subnet,type,comment
 
 # Get firewall policies with specific fields
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --table-fields policyid,name,srcintf,dstintf,action,status
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /cmdb/firewall/policy --table-fields policyid,name,srcintf,dstintf,action,status
 
 # Get LLDP neighbors with unlimited fields (show all available data)
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 0
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 0
 
 # Get LLDP neighbors with limited fields (default is 6)
-python3 fgt_api_client.py -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 8
+./fgt -i 192.168.1.99 -k your_api_key -m get -e /monitor/network/lldp/neighbors --table-max-fields 8
 ```
 
 #### Table Output Examples
@@ -298,16 +302,6 @@ Use the `--debug` flag to enable detailed debug output, which will show:
 3. **SSL Warnings**: By default, SSL warnings are suppressed for cleaner output. Use `--ssl-warnings` to enable them for security debugging
 4. **Configuration Files**: Protect configuration files containing credentials (use appropriate file permissions)
 
-## Migration from Previous Versions
-
-If you're upgrading from a previous version that used `--pretty` and `--no-pretty` flags:
-
-- Replace `--pretty` with `--format pretty` 
-- Replace `--no-pretty` with `--format json` 
-- Note: The default format is now json instead of table.
-
-The old flags have been removed in favor of the cleaner `--format` option. JSON format is now the default.
-
 ## Requirements
 
 - Python 3.6+
@@ -315,6 +309,3 @@ The old flags have been removed in favor of the cleaner `--format` option. JSON 
 - requests library
 - tabulate library
 
-## License
-
-This project is provided as-is for educational and testing purposes. Please ensure you comply with your organization's security policies when using this tool.
